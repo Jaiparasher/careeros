@@ -1,0 +1,2 @@
+title,url,difficulty,patterns,source,status,notes,time_complexity,space_complexity
+Two Sum,https://leetcode.com/problems/two-sum/,easy,hash-map;array,LeetCode,solved,Store indices while scanning.,O(n),O(n)

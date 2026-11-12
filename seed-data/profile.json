@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "source": "user_supplied_baseline",
+  "display_name": "Jai",
+  "current_employer": "Tata Consultancy Services",
+  "current_title": "Associate System Engineer",
+  "employment_start": "2025-03-01",
+  "employment_start_precision": "month",
+  "employment_end": null,
+  "education": [
+    {
+      "degree": "B.Tech Computer Science",
+      "start_year": 2020,
+      "end_year": 2024
+    }
+  ],
+  "target_roles": [
+    "Java Backend Developer",
+    "Full-Stack Developer",
+    "Software Engineer",
+    "SDE I"
+  ],
+  "target_company_types": [
+    "Product-based companies",
+    "High-growth startups",
+    "Established technology companies"
+  ],
+  "target_compensation_lpa": {
+    "min": 10,
+    "max": 15,
+    "note": "Aspirational goal; not a guarantee."
+  },
+  "preparation_horizon_months": {
+    "min": 3,
+    "max": 6
+  },
+  "career_direction": "Software development; do not prioritize data analyst or data engineering roles.",
+  "skills": [
+    "Java",
+    "Spring Boot",
+    "Hibernate",
+    "JPA",
+    "REST APIs",
+    "SQL",
+    "React",
+    "Git",
+    "Postman"
+  ],
+  "experience_evidence": [
+    {
+      "claim": "Developed and maintained 15+ REST APIs / 20+ endpoints using Java, Spring Boot, Hibernate and JPA.",
+      "verification": "User supplied; verify wording and figures against resume before external use."
+    },
+    {
+      "claim": "Integrated third-party KYC / verification APIs with validation, exception handling and logging.",
+      "verification": "User supplied."
+    },
+    {
+      "claim": "Resolved production defects and supported sprint tickets; prior drafts mentioned around 10+ defects and 3-5 tickets per sprint.",
+      "verification": "Quantified values require user confirmation before use."
+    },
+    {
+      "claim": "Performed backend debugging, SQL validation and Postman testing in Agile environment.",
+      "verification": "User supplied."
+    }
+  ],
+  "timezone": "Asia/Kolkata",
+  "daily_available_minutes": null,
+  "notes": "Ask the user to set current available study time in onboarding; do not assume a fixed schedule."
+}

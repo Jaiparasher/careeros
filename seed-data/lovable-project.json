@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "source": "user_supplied_baseline",
+  "name": "Lovable",
+  "type": "AI-powered application builder",
+  "status": "in_progress",
+  "summary": "A practical project developed by the user; not all planned modules/features are complete.",
+  "technologies_used_or_explored": [
+    "Java",
+    "Spring Boot",
+    "Spring AI",
+    "React",
+    "PostgreSQL",
+    "pgvector",
+    "RAG",
+    "AI tool calling",
+    "REST APIs",
+    "SSE",
+    "Docker",
+    "Kubernetes",
+    "MinIO"
+  ],
+  "technology_evidence_default": "used_or_explored_user_to_confirm_per_technology",
+  "known_project_constraints": [
+    "Do not mark project completed.",
+    "Do not invent repository/demo URLs, usage metrics, performance claims or completion percentage.",
+    "Let user add implemented features, incomplete features, bugs and architecture decisions."
+  ],
+  "interview_prep_topics": [
+    "System architecture",
+    "API design",
+    "Spring AI integration",
+    "RAG and tool calling",
+    "SSE streaming",
+    "PostgreSQL and pgvector",
+    "Containerization and Kubernetes",
+    "Technical challenges and trade-offs"
+  ]
+}

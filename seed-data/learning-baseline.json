@@ -1,0 +1,140 @@
+{
+  "schema_version": 1,
+  "source": "user_supplied_baseline",
+  "dsa": {
+    "playlist_title": "DSA Patterns 2026 | Crack FAANG in 3 Months | DSA Patterns by IITian",
+    "creator": "Padho with Pratyush",
+    "playlist_url": "https://www.youtube.com/playlist?list=PLbJhGqY-mq47k_WLUtzVjmarUm1EuXPj2",
+    "channel_url": "https://www.youtube.com/@padho_with_pratyush",
+    "playlist_completed": true,
+    "aggregate_solved_count": 350,
+    "aggregate_solved_count_operator": "greater_than_or_equal_to",
+    "aggregate_count_note": "User reports 350+ problems solved. Do not generate individual question records from this aggregate.",
+    "patterns_to_validate": [
+      "Two Pointers",
+      "Fast and Slow Pointers",
+      "Sliding Window",
+      "Kadane's Algorithm",
+      "Prefix Sum",
+      "Merge Intervals",
+      "Stack",
+      "Hash Maps",
+      "In-place Linked List Reversal",
+      "Dynamic Programming",
+      "Graphs",
+      "BFS",
+      "DFS",
+      "Binary Search",
+      "Trees"
+    ],
+    "pattern_status_default": "baseline_known_needs_assessment"
+  },
+  "learning_topics": [
+    {
+      "name": "Core Java",
+      "category": "Java",
+      "priority": "high"
+    },
+    {
+      "name": "OOP and SOLID",
+      "category": "Java",
+      "priority": "high"
+    },
+    {
+      "name": "Collections Framework",
+      "category": "Java",
+      "priority": "high"
+    },
+    {
+      "name": "Java 8+ Streams and Lambdas",
+      "category": "Java",
+      "priority": "high"
+    },
+    {
+      "name": "Java Multithreading",
+      "category": "Java",
+      "priority": "high"
+    },
+    {
+      "name": "JVM and Memory Basics",
+      "category": "Java",
+      "priority": "medium"
+    },
+    {
+      "name": "Spring Core and Dependency Injection",
+      "category": "Spring",
+      "priority": "high"
+    },
+    {
+      "name": "Spring Boot REST APIs",
+      "category": "Spring",
+      "priority": "high"
+    },
+    {
+      "name": "Spring Data JPA and Hibernate",
+      "category": "Spring",
+      "priority": "high"
+    },
+    {
+      "name": "Spring Security",
+      "category": "Spring",
+      "priority": "high"
+    },
+    {
+      "name": "Spring Boot Testing",
+      "category": "Spring",
+      "priority": "high"
+    },
+    {
+      "name": "Production-ready Spring Boot",
+      "category": "Spring",
+      "priority": "high"
+    },
+    {
+      "name": "Microservices",
+      "category": "Backend Engineering",
+      "priority": "high"
+    },
+    {
+      "name": "Apache Kafka",
+      "category": "Backend Engineering",
+      "priority": "high"
+    },
+    {
+      "name": "Caching and Transactions",
+      "category": "Backend Engineering",
+      "priority": "medium"
+    },
+    {
+      "name": "SQL and DBMS",
+      "category": "Computer Science",
+      "priority": "high"
+    },
+    {
+      "name": "Operating Systems",
+      "category": "Computer Science",
+      "priority": "medium"
+    },
+    {
+      "name": "Computer Networks",
+      "category": "Computer Science",
+      "priority": "medium"
+    },
+    {
+      "name": "Low-Level Design",
+      "category": "System Design",
+      "priority": "high"
+    },
+    {
+      "name": "High-Level Design",
+      "category": "System Design",
+      "priority": "medium"
+    },
+    {
+      "name": "Behavioral and Project Deep Dive",
+      "category": "Interview Skills",
+      "priority": "high"
+    }
+  ],
+  "important_note": "Topic priority is a starting suggestion for Java backend/SDE-I interviews, not a claim about mastery. The user should validate priority against actual job descriptions and assessments."
+}

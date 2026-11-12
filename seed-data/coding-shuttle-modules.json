@@ -1,0 +1,194 @@
+{
+  "schema_version": 1,
+  "source": "user_supplied_baseline",
+  "course_name": "Spring Boot 0 to 100 Cohort 4.0 [AI + DevOps]",
+  "provider": "Coding Shuttle",
+  "module_count": 20,
+  "completed_modules": 8,
+  "partially_completed_modules": 1,
+  "not_started_modules": 11,
+  "mean_completion_percent": 40.55,
+  "completion_calculation": "Arithmetic mean of the 20 supplied module percentages, rounded to 2 decimals.",
+  "modules": [
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 1,
+      "module_key": "coding-shuttle-cohort-4-module-01",
+      "title": "Introduction To Spring & Spring Boot",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 2,
+      "module_key": "coding-shuttle-cohort-4-module-02",
+      "title": "Spring Boot MVC and RESTful APIs",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 3,
+      "module_key": "coding-shuttle-cohort-4-module-03",
+      "title": "Hibernate and Spring Boot Data JPA",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 4,
+      "module_key": "coding-shuttle-cohort-4-module-04",
+      "title": "Production ready Spring Boot Features",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 5,
+      "module_key": "coding-shuttle-cohort-4-module-05",
+      "title": "Spring Security Fundamentals",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 6,
+      "module_key": "coding-shuttle-cohort-4-module-06",
+      "title": "Spring Security Advanced",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 7,
+      "module_key": "coding-shuttle-cohort-4-module-07",
+      "title": "Spring Boot Testing",
+      "completion_percent": 11,
+      "status": "in_progress",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 8,
+      "module_key": "coding-shuttle-cohort-4-module-08",
+      "title": "Spring Boot Deployment with CI/CD",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 9,
+      "module_key": "coding-shuttle-cohort-4-module-09",
+      "title": "Spring AI, RAG and Tool Calling",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 10,
+      "module_key": "coding-shuttle-cohort-4-module-10",
+      "title": "Aspect-Oriented Programming",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 11,
+      "module_key": "coding-shuttle-cohort-4-module-11",
+      "title": "Caching and Concurrent Transaction Management",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 12,
+      "module_key": "coding-shuttle-cohort-4-module-12",
+      "title": "Introduction To Microservice Architecture",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 13,
+      "module_key": "coding-shuttle-cohort-4-module-13",
+      "title": "Advanced Microservice Concepts",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 14,
+      "module_key": "coding-shuttle-cohort-4-module-14",
+      "title": "Apache Kafka in Spring Boot",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 15,
+      "module_key": "coding-shuttle-cohort-4-module-15",
+      "title": "Docker with Spring Boot",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 16,
+      "module_key": "coding-shuttle-cohort-4-module-16",
+      "title": "Kubernetes Components",
+      "completion_percent": 100,
+      "status": "completed",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 17,
+      "module_key": "coding-shuttle-cohort-4-module-17",
+      "title": "Kubernetes Advanced",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 18,
+      "module_key": "coding-shuttle-cohort-4-module-18",
+      "title": "Java Multithreading and Async Task Scheduling in Spring Boot",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 19,
+      "module_key": "coding-shuttle-cohort-4-module-19",
+      "title": "Reactive Programming Basics",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    },
+    {
+      "course_key": "coding-shuttle-cohort-4",
+      "module_number": 20,
+      "module_key": "coding-shuttle-cohort-4-module-20",
+      "title": "Reactive Programming Advanced",
+      "completion_percent": 0,
+      "status": "not_started",
+      "source": "user_supplied_baseline"
+    }
+  ]
+}
