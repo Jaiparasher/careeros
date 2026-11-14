@@ -1,3 +1,8 @@
+---
+name: interview-question-bank
+description: Build and maintain the CareerOS resume-wide interview question bank, covering all resume skills with browseable skill/topic taxonomy, answer tracking, Grind 75 integration and content coverage gaps.
+---
+
 # Skill: Resume-Wide Interview Question Bank
 
 Use this skill when implementing or editing the CareerOS interview question bank.

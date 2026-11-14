@@ -1,3 +1,8 @@
+---
+name: study-sprint
+description: Build the CareerOS capacity-aware 30-day interview sprint and Day 31+ adaptive planning, including Grind 75 scheduling, workload warnings, preview-before-accept and priority-weighted rolling plans.
+---
+
 # Skill: Capacity-Aware Study Sprint
 
 Use this skill when building the 30-day interview sprint or Day 31+ planning.
