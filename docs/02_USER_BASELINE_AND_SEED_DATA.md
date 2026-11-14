@@ -22,6 +22,14 @@ Professional experience statements supplied by the user:
 
 Do not invent employer achievements, revenue impact, traffic scale, team size or performance improvements. When suggesting resume bullets, preserve the user's evidence and ask them to validate any estimate.
 
+## 2.1.1 Resume skill inventory for interview coverage
+
+Use `seed-data/interview-skills-catalog.json` as the initial technology/skill inventory for the question bank. It consolidates skills mentioned across the user's resume drafts and preparation context; allow the user to confirm or remove entries against their latest resume before treating the inventory as final.
+
+Initial coverage includes Java, JavaScript, TypeScript, SQL, C, C++, Spring Framework/Core, Spring Boot, Spring Security, Hibernate, JPA, React, Node.js, Express.js, Next.js, Redux, REST APIs, MongoDB, MySQL, Firebase, PostgreSQL/pgvector, WebSockets, Server-Sent Events, JWT, Docker, Kubernetes, Git/GitHub, Postman, Swagger/OpenAPI, Maven, CI/CD, Agile/Scrum, Microservices, Apache Kafka, Spring AI/RAG/Tool Calling, DBMS, Operating Systems, Computer Networks, LLD, HLD, AWS foundations/AI Practitioner concepts, and project/behavioral interview topics.
+
+This inventory is for question coverage, not a declaration of expertise. A skill can be marked `on_resume`, `studied`, `used_in_project`, `used_professionally`, `assessed`, or `confident` independently. The AWS AI Practitioner item is a certification/foundation area, not a claim of AWS engineering experience.
+
 ## 2.2 DSA learning baseline
 
 Completed resource:
@@ -47,7 +55,7 @@ Known patterns/topics mentioned in prior preparation context:
 - Binary Search.
 - Trees and other common interview patterns.
 
-Important modeling rule: mark the playlist as completed and record the aggregate claim of 350+ solved problems. Do not fabricate the identities, URLs, dates, attempts or individual solution history of those 350+ questions. Known patterns are `baseline-known` / require assessment, not automatically `mastered`. Let the user import exact questions later via CSV.
+Important modeling rule: mark the playlist as completed and record the aggregate claim of 350+ solved problems. Add the separate official Grind 75 Core 75 collection as a fresh curated track; do not infer which Grind 75 items overlap with the user's 350+ completed questions until exact history is imported. Do not fabricate the identities, URLs, dates, attempts or individual solution history of those 350+ questions. Known patterns are `baseline-known` / require assessment, not automatically `mastered`. Let the user import exact questions later via CSV.
 
 ## 2.3 Coding Shuttle course baseline
 
@@ -107,7 +115,15 @@ Technologies and areas used or explored:
 
 The user says the project has been developed but not all modules/features are complete. Store it as `in_progress`, not `completed`. Do not assume every technology above is fully production-ready or deeply mastered. Allow the user to classify each technology as studied, used in project, or independently confident.
 
-## 2.5 Seed/import behavior
+## 2.5 Interview question bank and Grind 75 baseline
+
+- Load the skill taxonomy from `seed-data/interview-skills-catalog.json` after user review.
+- Load/maintain the Grind 75 collection metadata from `seed-data/grind75-track.json`.
+- Use the official Tech Interview Handbook Grind 75 tool as the source of truth. Store title, canonical problem link, difficulty, tags, official sequence and import date; do not copy full problem statements or editorials.
+- The question bank must include technology-wise and topic-wise browsing. See docs 17 and 18.
+- Do not mark a Grind 75 problem solved based only on the aggregate 350+ count.
+
+## 2.6 Seed/import behavior
 
 - Seed files must be idempotent: re-running import must not create duplicate course modules.
 - Use stable external keys for seeded course modules, e.g. `coding-shuttle-cohort-4-module-01`.

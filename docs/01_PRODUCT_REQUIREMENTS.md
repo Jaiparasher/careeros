@@ -17,10 +17,12 @@ CareerOS must create one trustworthy baseline, reveal gaps relevant to target ro
 1. Establish an accurate, editable profile and learning baseline from supplied data.
 2. Make daily DSA practice and spaced revision easy to record.
 3. Preserve exact progress across the 20 Coding Shuttle modules.
-4. Turn incomplete or weak areas into manageable study tasks.
-5. Track projects and applications without spreadsheet overhead.
-6. Add AI assistance only after core data and workflows work reliably.
-7. Minimize build and maintenance time so the user spends most of their time preparing and applying.
+4. Maintain a resume-wide interview question bank that is searchable by skill, technology and topic.
+5. Run a structured first 30-day interview sprint, including a dedicated Grind 75 DSA collection, with capacity-aware scheduling.
+6. Continue after Day 30 using transparent role relevance, knowledge gaps and revision priority.
+7. Track projects and applications without spreadsheet overhead.
+8. Add AI assistance only after core data and workflows work reliably.
+9. Minimize build and maintenance time so the user spends most of their time preparing and applying.
 
 ## 1.4 Success measures
 
@@ -53,9 +55,11 @@ Use Supabase Auth for a secure owner session. RLS must restrict rows to `auth.ui
 - App navigation and responsive dashboard.
 - Existing learning baseline import.
 - DSA question CRUD, attempts, tags, status and revision schedule.
+- Grind 75 Core 75 collection with official source links, metadata and deduplicated progress tracking.
+- Resume-wide interview question bank browsable by technology/skill and topic, with filters and answer tracking.
 - Course-module tracker with exact module progress.
 - Topic roadmap with confidence/readiness separated from completion.
-- Daily study tasks and simple weekly view.
+- Daily study planner with an accept-before-save 30-day interview sprint and capacity checks.
 
 ### P1 - after the first usable release
 - Project tracker for the existing AI-powered builder project.
@@ -64,8 +68,9 @@ Use Supabase Auth for a secure owner session. RLS must restrict rows to `auth.ui
 - Basic application analytics.
 
 ### P2 - AI assistance
-- Text-based technical mock interviews.
+- Text-based technical mock interviews that select questions from the existing question bank.
 - Answer feedback and suggested ideal answer.
+- User-triggered question generation for a selected skill/topic.
 - JD-to-profile comparison.
 - Study recommendations grounded in stored user context.
 
@@ -97,7 +102,11 @@ Use Supabase Auth for a secure owner session. RLS must restrict rows to `auth.ui
 - Transparent AI: show input context, evaluation criteria and limitations.
 - User control: allow manual edits and corrections.
 
-## 1.9 Out of scope
+## 1.9 Interview coverage and planning requirement
+
+CareerOS must cover all technologies and skills in the confirmed resume inventory through a question bank. DSA coding problems remain separate from conceptual/practical interview questions. The first 30-day sprint should provide breadth across Java backend, frontend/full-stack, SQL/DBMS, API engineering, tools/DevOps, CS fundamentals, system design, behavioral and project deep dives. The Grind 75 Core 75 is the default DSA collection, subject to workload/capacity warnings. After Day 30, planning becomes adaptive and priority-led. Details: `docs/17_INTERVIEW_QUESTION_BANK_AND_SKILL_TAXONOMY.md` and `docs/18_FIRST_30_DAY_INTERVIEW_SPRINT.md`.
+
+## 1.10 Out of scope
 
 - Replacing LeetCode or providing a proprietary code execution environment.
 - Teaching every computer-science topic from scratch.

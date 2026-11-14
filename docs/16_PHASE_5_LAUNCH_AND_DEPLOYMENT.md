@@ -9,7 +9,7 @@ Turn the currently completed scope into a stable, private, deployed application 
 Before deployment, explicitly list which feature phases are included in this release. Recommended first production release:
 - Phase 0 bootstrap.
 - Phase 1 foundation and owner profile.
-- Phase 2 DSA, learning and planner.
+- Phase 2 DSA/Grind 75, learning, skill-wise interview question bank and 30-day planner.
 
 Phase 3 and Phase 4 can be deployed later after their exit criteria pass. Hide unfinished navigation items and do not label placeholder screens as released features.
 
@@ -45,11 +45,13 @@ Do not copy a local development database over production without an explicit, re
 Run these manually after deploy:
 1. Sign in as owner.
 2. Open dashboard and verify course progress.
-3. Open DSA, add a temporary test question, record an attempt and remove/archive the test record.
-4. Check a due revision and reschedule it.
-5. Update one study task and verify it persists after reload.
-6. Check Settings and timezone.
-7. Sign out; verify protected pages redirect or show the correct unauthorized state.
+3. Open DSA, verify Grind 75 import status, add a temporary test question, record an attempt and remove/archive the test record.
+4. Open Interview Questions and filter by skill/topic; save a test answer note.
+5. Preview a 30-day sprint and verify capacity warning/acceptance behavior.
+6. Check a due revision and reschedule it.
+7. Update one study task and verify it persists after reload.
+8. Check Settings and timezone.
+9. Sign out; verify protected pages redirect or show the correct unauthorized state.
 8. If Phase 3 is included: add and remove a test application/project item and verify private file access.
 9. If Phase 4 is included: run one small AI mock interview and verify error/cost handling.
 

@@ -37,14 +37,47 @@
   "career_direction": "Software development; do not prioritize data analyst or data engineering roles.",
   "skills": [
     "Java",
+    "JavaScript",
+    "TypeScript",
+    "C",
+    "C++",
+    "Spring Framework / Spring Core",
     "Spring Boot",
-    "Hibernate",
-    "JPA",
-    "REST APIs",
-    "SQL",
+    "Spring Security",
+    "Hibernate and JPA",
+    "Microservices",
+    "Apache Kafka",
+    "Spring AI, RAG and Tool Calling",
     "React",
-    "Git",
-    "Postman"
+    "Redux / Redux Toolkit",
+    "Next.js",
+    "Node.js",
+    "Express.js",
+    "SQL",
+    "MySQL",
+    "MongoDB",
+    "Firebase",
+    "PostgreSQL / pgvector (project experience)",
+    "REST APIs",
+    "WebSockets and Server-Sent Events",
+    "JWT and Token Authentication",
+    "Postman",
+    "Swagger / OpenAPI",
+    "Docker",
+    "Kubernetes",
+    "Git and GitHub",
+    "Maven",
+    "CI/CD and Deployment",
+    "Agile / Scrum",
+    "DBMS Fundamentals",
+    "Operating Systems",
+    "Computer Networks",
+    "Low-Level Design",
+    "High-Level Design",
+    "AWS Foundations / AI Practitioner Concepts",
+    "TCS E-Procurement Project Deep Dive",
+    "Lovable AI Builder Project Deep Dive",
+    "Behavioral and HR Questions"
   ],
   "experience_evidence": [
     {
@@ -66,5 +99,14 @@
   ],
   "timezone": "Asia/Kolkata",
   "daily_available_minutes": null,
-  "notes": "Ask the user to set current available study time in onboarding; do not assume a fixed schedule."
+  "notes": "Ask the user to set current available study time in onboarding; do not assume a fixed schedule.",
+  "resume_skill_inventory_file": "interview-skills-catalog.json",
+  "certifications_or_credentials_to_verify": [
+    {
+      "name": "AWS Certified AI Practitioner",
+      "status": "mentioned_in_prior_resume_draft_verify_current_status",
+      "note": "Do not present as an earned certification until the user confirms current status."
+    }
+  ],
+  "skill_inventory_note": "This is an expanded initial question-bank inventory consolidated from prior resume/preparation context. User must confirm it against the latest resume. Inclusion is not proof of proficiency."
 }

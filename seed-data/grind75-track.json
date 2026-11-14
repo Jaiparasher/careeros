@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "collection_key": "grind75_core_75",
+  "name": "Grind 75 - Core 75",
+  "publisher": "Tech Interview Handbook",
+  "official_collection_url": "https://www.techinterviewhandbook.org/grind75/",
+  "faq_url": "https://www.techinterviewhandbook.org/grind75/faq",
+  "about_url": "https://www.techinterviewhandbook.org/grind75/about",
+  "source_checked_on": "2026-11-14",
+  "source_notes": [
+    "The official tool describes Grind 75 as a customizable coding interview list and supports filtering/grouping by topic and difficulty and customizing available time.",
+    "The official About page currently describes a pool of 169 questions with the top 75 selected as Grind 75. The default 75-question view currently reports 24 Easy, 42 Medium and 9 Hard with an estimated 64 hours; the live site may change.",
+    "Treat the official tool as the source of truth. Do not hardcode difficulty counts or assume the list never changes. Save the imported source snapshot date and source order."
+  ],
+  "import_policy": {
+    "preferred_mode": "manual_or_verified_import_from_official_source",
+    "preserve_official_order": true,
+    "store_fields": [
+      "question_title",
+      "difficulty",
+      "topic_tags",
+      "official_order",
+      "leetcode_url",
+      "source_collection",
+      "source_snapshot_date"
+    ],
+    "do_not_copy": [
+      "full_problem_statement",
+      "editorial_solution",
+      "premium_content"
+    ],
+    "deduplicate_by": [
+      "normalized_leetcode_url",
+      "external_problem_slug"
+    ],
+    "unknown_progress": "not_started_until_user_imports_exact_history_or_marks_status",
+    "never_infer_solved_from_aggregate_350_plus": true
+  },
+  "sprint_target": {
+    "target_question_count": 75,
+    "target_days": 30,
+    "distribution": "25 practice days with 3 questions each, plus 5 review/mock days; adapt to daily capacity and question estimates",
+    "capacity_warning_required": true,
+    "official_time_estimate_hours_currently_seen": 64,
+    "official_time_estimate_is_dynamic": true
+  }
+}

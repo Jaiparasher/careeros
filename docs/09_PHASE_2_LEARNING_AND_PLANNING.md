@@ -109,7 +109,38 @@ Each topic should separate:
 - Allow user to accept/edit the proposed plan before tasks are saved.
 - Carry forward overdue tasks through an explicit action; do not shift them silently.
 
-## 9.6 Dashboard v2
+## 9.6 Resume-wide interview question bank
+
+Build the static, useful question bank in Phase 2 so the user does not need AI or paid APIs to study.
+
+- Follow `docs/17_INTERVIEW_QUESTION_BANK_AND_SKILL_TAXONOMY.md`, `seed-data/interview-skills-catalog.json`, `seed-data/interview-question-bank-seed.json` and `prompts/08_QUESTION_BANK_SEED.md`.
+- Support browse by technology/skill and by topic.
+- Import/seed the initial skill inventory only after the user can review it.
+- Populate starter question content for every confirmed resume skill. Aim for at least 10-12 questions per critical/high skill, 6-8 per medium skill, and 3-5 per low-priority skill. If a skill has no verified content yet, show `content pending`; never make the bank appear complete with placeholders.
+- Question types: conceptual, coding, debugging, practical scenario, design, behavioral, project deep dive and SQL exercise.
+- Store expected answer points, concise sample answer, follow-up prompts, source/attribution, difficulty, priority and target-role tags.
+- The user can attempt an answer, reveal answer points, add notes, set status/confidence and schedule revision.
+- Add combined filtering/search and a skill coverage map.
+- Static bank must work with AI disabled. AI answer scoring and new question generation are Phase 4 only.
+
+### Grind 75 collection
+- Add the official Grind 75 Core 75 as a dedicated collection within DSA Practice, using `seed-data/grind75-track.json` as collection metadata.
+- Source: https://www.techinterviewhandbook.org/grind75/ . Preserve imported official order, title, difficulty, topic tags, canonical LeetCode URL and import snapshot date.
+- The official list is dynamic/customizable. Do not hardcode counts as permanent or invent problem entries. If verified import is not possible, provide official link + CSV import and clearly show the collection as not imported.
+- Store collection metadata on existing DSA problems or link collection membership to existing problems after deduplication; never create a second record for a problem already tracked.
+- The aggregate 350+ solved statement does not mark exact Grind 75 items as completed.
+
+## 9.7 30-day interview sprint and planner
+
+- Implement the plan described in `docs/18_FIRST_30_DAY_INTERVIEW_SPRINT.md`.
+- Ask for sprint start date, target role focus and available daily minutes before generating.
+- Include Grind 75 tasks and daily technology/topic-based question-bank tasks. Include review checkpoints and project/behavioral practice.
+- Generate a preview, compute total workload from estimated question times, warn if it exceeds available capacity, and obtain acceptance before task creation.
+- Offer 30-day intensive, 45-day and 60-day capacity-adjusted plans. Do not silently schedule beyond available minutes.
+- Do not assume every question in the full skill bank can be completed in 30 days. The sprint is a prioritized coverage pass; the full library remains available for continued preparation.
+- At Day 30, reassess skills and switch to rolling priority-based planning for Day 31+.
+
+## 9.8 Dashboard v2
 
 Live cards:
 - Today's planned minutes vs completed minutes.
@@ -121,11 +152,11 @@ Live cards:
 
 All metrics must be derived from stored records. Include tooltips or labels explaining calculation where ambiguous.
 
-## 9.7 CSV import/export
+## 9.9 CSV import/export
 
-DSA import columns in `templates/dsa_questions_import.csv`. Validate per row; don't invent missing values. Export all active and archived records on request.
+DSA import columns in `templates/dsa_questions_import.csv` and technical interview question columns in `templates/interview_questions_import.csv`. Validate per row; do not invent missing values. Preview duplicates before commit. Export all active and archived records on request.
 
-## Exit criteria
+## 9.10 Exit criteria
 
 - [ ] DSA question CRUD and filters work with real Supabase data.
 - [ ] Multiple attempts are retained.
@@ -136,4 +167,9 @@ DSA import columns in `templates/dsa_questions_import.csv`. Validate per row; do
 - [ ] Suggested plan respects available-minute cap.
 - [ ] Dashboard values are derived, not hardcoded.
 - [ ] CSV import previews rows and reports errors/duplicates.
+- [ ] Interview question bank can browse by skill and topic and has non-empty starter content.
+- [ ] User can record answer notes/status/confidence and schedule question revision.
+- [ ] Grind 75 collection has official attribution, verified import state, source links and duplicate linking.
+- [ ] 30-day sprint preview contains DSA and skill-based tasks, checks workload capacity and requires acceptance.
+- [ ] Day 31+ priority continuation explains its ranking reasons.
 - [ ] All important flows pass browser checks on desktop and mobile.

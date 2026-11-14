@@ -12,7 +12,7 @@ Use a single Next.js application with Supabase as a managed backend platform. Th
 - Supabase Storage only for private resume files in Phase 3.
 - Zod for validating form inputs and server boundaries.
 - Vercel for hosting.
-- OpenRouter for optional LLM access in Phase 4.
+- Google Gemini via the official `@google/genai` SDK for optional LLM access in Phase 4.
 - Vitest or the current ecosystem's compatible unit test runner; Playwright for essential end-to-end flows if lightweight setup is practical.
 
 Use stable versions compatible with each other at setup time. Do not pin outdated versions from this document; record the selected versions in `package.json` and `docs/IMPLEMENTATION_STATUS.md`.
@@ -38,7 +38,7 @@ Supabase
   |-- Private Storage (Phase 3 resumes)
 
 Vercel hosts the Next.js application.
-OpenRouter is called only from a server-side route/action in Phase 4.
+Google Gemini is called only from a server-side route/action in Phase 4.
 ```
 
 ## 4.3 Suggested project structure

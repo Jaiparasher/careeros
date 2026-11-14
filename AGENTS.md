@@ -13,6 +13,9 @@ You are building a lightweight personal job-switch preparation product. Follow t
 7. Never fabricate career history, metrics, DSA history, interview scores, or course completion. Use supplied seed files exactly.
 8. A completed course is not proof of mastery. Keep course completion, confidence, assessment evidence and interview readiness separate.
 9. AI is deferred until Phase 4. Do not use LLMs for CRUD, date arithmetic, scheduling calculations, or other deterministic tasks.
+10. Build the Phase 2 interview question bank from the confirmed resume skill inventory; it must work without AI and be browsable by skill and topic.
+11. Track Grind 75 as a dedicated DSA collection with official attribution, verified imports and duplicate linking; never infer item-level completion from aggregate solved counts.
+12. The first 30-day plan must be previewed, capacity-checked and accepted before tasks are created. After Day 30, prioritize transparently by role relevance, knowledge gaps and revisions.
 10. Do not commit `.env` files, API keys, service-role keys, resume contents, or personal secrets.
 
 ## Working method
@@ -20,7 +23,7 @@ You are building a lightweight personal job-switch preparation product. Follow t
 - Before each phase: read its specification, inspect the current repository, summarize the smallest viable plan, and list files likely to change.
 - Ask for clarification only when a missing decision blocks safe implementation. Otherwise use documented defaults and record the choice.
 - Preserve a working application after every implementation batch.
-- Keep UI consistent with `docs/06_UI_UX_SPECIFICATION.md`.
+- Keep UI consistent with `docs/06_UI_UX_SPECIFICATION.md`. Follow `docs/17_INTERVIEW_QUESTION_BANK_AND_SKILL_TAXONOMY.md` and `docs/18_FIRST_30_DAY_INTERVIEW_SPRINT.md` for interview coverage and scheduling.
 - Add migrations for schema changes; never make undocumented dashboard-only database changes.
 - Add or update tests for behavior changed. Run lint, typecheck, tests and production build when available.
 - Inspect the running UI in a browser at desktop and mobile widths for user-facing phases. Fix visible defects before calling a task done.

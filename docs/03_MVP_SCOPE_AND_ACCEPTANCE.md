@@ -7,6 +7,8 @@ The first release must do four things well:
 2. Track DSA questions, attempts and revisions.
 3. Preserve learning/course progress and topic confidence.
 4. Turn a small available-time budget into a daily task list.
+5. Browse and track important interview questions across all confirmed resume technologies and topics.
+6. Start a capacity-aware 30-day interview sprint with a dedicated Grind 75 collection.
 
 Do not implement job CRM, resume AI, voice, automatic job scraping, or advanced AI during this first release.
 
@@ -39,7 +41,18 @@ Do not implement job CRM, resume AI, voice, automatic job scraping, or advanced 
 - I can add tasks, choose date, duration, category and priority, and mark tasks done.
 - Incomplete tasks remain visible and can be rescheduled; they are not silently deleted.
 - I can see a simple week view and daily completion ratio.
+- I can preview and accept a first 30-day interview sprint.
+- Sprint includes Grind 75 DSA tasks and skill-wise interview question tasks.
+- Plan warns if the official Grind 75 estimated workload does not fit my daily available time and offers longer alternatives.
+- Day 31+ plan is prioritized by role relevance, weak areas, due revision and job-description relevance.
 - Initial recommendations use deterministic rules, not AI calls.
+
+### Interview question bank
+- Browse all confirmed resume skills by technology and topic.
+- Search/filter by skill, topic, difficulty, question type, priority and progress status.
+- Save answer notes, confidence, outcome and revision date.
+- Grind 75 Core 75 is visible as a dedicated DSA collection with official links and source attribution.
+- Do not duplicate Grind 75 problems already tracked in DSA history; attach collection membership to the existing record.
 
 ## 3.3 Acceptance checklist
 
@@ -74,6 +87,11 @@ Do not implement job CRM, resume AI, voice, automatic job scraping, or advanced 
 - [ ] User can distinguish `course_complete` from `interview_ready`.
 - [ ] Planner supports task creation, editing, completion and rescheduling.
 - [ ] Time budget does not create more tasks than available minutes.
+- [ ] User can browse a non-empty interview question bank by skill and topic.
+- [ ] All confirmed resume skills have visible coverage status; gaps are marked pending rather than hidden.
+- [ ] Grind 75 source link, import state and progress are visible.
+- [ ] 30-day sprint preview checks capacity and allows accept/edit/reject.
+- [ ] Day 31+ priority recommendations explain the reason for each item.
 
 ## 3.4 Release gate
 

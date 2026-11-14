@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "source_skill_catalog": "interview-skills-catalog.json",
+  "purpose": "Generation/import manifest for the initial static technical interview question bank.",
+  "content_status": "not_populated_yet_antigravity_must_generate_or_import_curated_items",
+  "question_bank_is_required_in_phase": 2,
+  "must_work_without_runtime_ai": true,
+  "minimum_questions_by_skill_priority": {
+    "critical": 12,
+    "high": 10,
+    "medium": 6,
+    "low": 3
+  },
+  "question_types": [
+    "conceptual",
+    "coding",
+    "debugging",
+    "practical_scenario",
+    "design",
+    "behavioral",
+    "project_deep_dive",
+    "sql_exercise"
+  ],
+  "required_fields": [
+    "skill_slug",
+    "skill_name",
+    "skill_category",
+    "topic",
+    "question_title",
+    "question_prompt",
+    "question_type",
+    "difficulty",
+    "priority",
+    "target_roles",
+    "tags",
+    "expected_answer_points",
+    "source_name",
+    "origin"
+  ],
+  "source_policy": "Use original CareerOS-curated questions or properly attributed public references. Never falsely claim a question was asked at a named company. Do not copy full proprietary problem statements or paid editorial solutions.",
+  "population_prompt": "../prompts/08_QUESTION_BANK_SEED.md",
+  "user_confirmation_required": true
+}

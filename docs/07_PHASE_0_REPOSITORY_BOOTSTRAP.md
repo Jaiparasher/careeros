@@ -22,7 +22,7 @@ Use only variables needed by the selected Supabase SSR/client setup, such as:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` or publishable key name required by current Supabase guidance
 - `SUPABASE_SERVICE_ROLE_KEY` only if a specific server-only administrative task truly requires it; avoid it in normal app code and do not add it by default.
-- `OPENROUTER_API_KEY` is not needed until Phase 4.
+- `GEMINI_API_KEY` is not needed until Phase 4.
 
 Do not hardcode values or request user secrets in code. Provide the user with a list of values to enter in local environment settings.
 

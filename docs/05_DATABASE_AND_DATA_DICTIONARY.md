@@ -1,6 +1,6 @@
 # 5. Database and Data Dictionary
 
-The SQL migrations in `supabase/migrations/` are the implementation starting point. Apply them in numeric order as the corresponding phase is implemented; migrations 0004 and 0005 are Phase 3 and Phase 4 respectively. This document describes the intended entities and rules. Antigravity must review SQL against the installed Supabase/Postgres behavior before applying it.
+The SQL migrations in `supabase/migrations/` are the implementation starting point. Apply them in numeric order in a new project. Migrations 0004 and 0005 add Phase 3 and Phase 4 data; migration 0006 adds the Phase 2 interview question bank, Grind 75 collection metadata and study sprint extension. Migration numbering is immutable once applied; do not renumber files after they have been run. Apply all committed migrations in numeric order, even when a later migration adds an earlier-phase feature. This document describes the intended entities and rules. Antigravity must review SQL against the installed Supabase/Postgres behavior before applying it.
 
 ## 5.1 Ownership model
 
@@ -18,6 +18,8 @@ Every user-owned row has `user_id uuid not null references auth.users(id) on del
 | revision_schedules | Due revision events | 2 |
 | study_tasks | Daily/weekly tasks | 2 |
 | study_sessions | Optional actual time spent | 2 |
+| interview_question_bank | Skill/topic-wise technical interview question catalog and per-user progress | 2 |
+| study_plans | Named 30-day sprint, priority extension or custom plan | 2 |
 | projects | Project metadata and status | 3 |
 | project_features | Project feature/bug/next-step tracker | 3 |
 | job_applications | Job pipeline records | 3 |
@@ -56,7 +58,7 @@ Every user-owned row has `user_id uuid not null references auth.users(id) on del
 - `evidence_notes`, `last_revised_at`, `next_revision_at`.
 
 ### dsa_questions
-- `title`, `url`, `difficulty`, `patterns` (or normalized tag relation if needed later), `source`, `status`, `notes`, `optimal_time_complexity`, `optimal_space_complexity`, `archived_at`.
+- `title`, `url`, `difficulty`, `patterns` (or normalized tag relation if needed later), `source`, `status`, `notes`, `optimal_time_complexity`, `optimal_space_complexity`, `archived_at`. Migration 0006 adds optional `collection_tags`, `collection_order`, `external_problem_slug`, and `source_snapshot_date` so Grind 75 can be tracked without duplicating a problem already in the user's DSA history.
 - Unique or duplicate warning should compare normalized URL first; title alone should warn, not block, because different platforms can have similar names.
 
 ### dsa_attempts
@@ -69,8 +71,17 @@ Every user-owned row has `user_id uuid not null references auth.users(id) on del
 - Avoid duplicate open revision event for same question and same scheduled date.
 - Rescheduling must be explicit and auditable through the schedule history.
 
+### interview_question_bank
+- `skill_slug`, `skill_name`, `skill_category`, `topic`, `subtopic`, `title`, `question_prompt`, `question_type`, `difficulty`, `priority`, `target_roles`, `tags`, `expected_answer_points` (JSONB), optional `sample_answer`, `follow_up_questions` (JSONB), `estimated_minutes`, `source_name`, `source_url`, `source_external_id`, `status`, `confidence_score`, `last_attempted_at`, `next_revision_at`, `answer_notes`, `is_active`.
+- A question row is user-owned; enforce RLS. Keep imported/curated content distinct from user-generated and AI-generated content through `source_name` / `origin`.
+- Skill values must match a confirmed `skill_slug` from the seed catalog or be a user-added skill.
+
+### study_plans
+- `name`, `plan_type` (`30_day_sprint`, `priority_extension`, `custom`), `starts_on`, `target_ends_on`, `status`, `target_role`, `daily_available_minutes`, `settings` JSONB, `created_at`.
+- Plan preview is not persisted as active tasks until the user accepts it.
+
 ### study_tasks
-- `title`, `description`, `category`, `planned_for`, `estimated_minutes`, `priority`, `status`, optional `question_id`, `learning_topic_id`.
+- `title`, `description`, `category`, `planned_for`, `estimated_minutes`, `priority`, `status`, optional `question_id` (DSA), `interview_question_id` (skill-wise bank), `learning_topic_id`, and `study_plan_id`.
 - Incomplete tasks are not deleted when the date passes. Offer reschedule/carry-forward.
 
 ### job_applications
@@ -96,3 +107,15 @@ Every user-owned row has `user_id uuid not null references auth.users(id) on del
 - Import should validate each row and return a result summary (created, updated, skipped, rejected with row number and reason).
 - Imports must not overwrite edited rows silently.
 - Export personal records to CSV/JSON from Settings before any future account migration.
+
+
+## 5.6 Interview question bank and sprint integrity
+
+- `interview_question_bank` is separate from `interview_questions` in Phase 4, which stores the questions asked during an actual mock-interview session.
+- Every bank item has exactly one primary skill and topic; it may have multiple tags and target-role labels.
+- `study_tasks.question_id` points to DSA problems; `study_tasks.interview_question_id` points to technology/skill interview questions. Never overload one foreign key for both.
+- `study_plans` must be owner-scoped and use a composite `(id, user_id)` key for task ownership.
+- Study tasks referencing a plan or question must enforce same-user ownership with composite foreign keys.
+- Grind 75 is a collection attribute on DSA questions (or a collection join table if implementation needs multiple collections), not a separate duplicated question record. Normalize URLs/slugs before linking duplicates.
+- Plan tasks are generated from stored bank records and DSA records; the planner must preserve the source question and explain why it was selected.
+- Store a plan settings snapshot (availability, target role, selected Grind75 scope, prioritization weights and sprint dates) so plan regeneration is explainable.

@@ -1,0 +1,759 @@
+{
+  "schema_version": 1,
+  "source": "user_resume_context_and_prior_preparation_history",
+  "note": "This is the initial skills inventory for question-bank coverage. The user should be able to edit it and confirm it against the latest resume. Listing a skill does not assert mastery or production depth.",
+  "default_target_roles": [
+    "Java Backend Developer",
+    "Full-Stack Developer",
+    "Software Engineer",
+    "SDE I"
+  ],
+  "categories": [
+    {
+      "slug": "programming-languages",
+      "name": "Programming Languages",
+      "skills": [
+        {
+          "slug": "java",
+          "name": "Java",
+          "priority": "critical",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "Core syntax, types and control flow",
+            "OOP principles and SOLID",
+            "Collections Framework",
+            "Generics",
+            "String immutability and String pool",
+            "Exception handling",
+            "Java 8+: lambdas, streams and Optional",
+            "Concurrency, threads and executors",
+            "JVM memory, garbage collection and class loading"
+          ]
+        },
+        {
+          "slug": "javascript",
+          "name": "JavaScript",
+          "priority": "high",
+          "role_relevance": [
+            "Full-Stack Developer",
+            "Software Engineer"
+          ],
+          "topics": [
+            "Scope, hoisting and closures",
+            "this, prototypes and inheritance",
+            "Event loop, call stack and task queues",
+            "Promises and async/await",
+            "Array and object methods",
+            "Error handling and modules"
+          ]
+        },
+        {
+          "slug": "typescript",
+          "name": "TypeScript",
+          "priority": "medium",
+          "role_relevance": [
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Static typing and inference",
+            "Interfaces and type aliases",
+            "Generics",
+            "Union and intersection types",
+            "Utility types and narrowing",
+            "Typing React props and API responses"
+          ]
+        },
+        {
+          "slug": "c",
+          "name": "C",
+          "priority": "low",
+          "role_relevance": [
+            "Software Engineer"
+          ],
+          "topics": [
+            "Pointers and memory",
+            "Arrays and strings",
+            "Structs and unions",
+            "Stack versus heap",
+            "Compilation and linking"
+          ]
+        },
+        {
+          "slug": "cpp",
+          "name": "C++",
+          "priority": "low",
+          "role_relevance": [
+            "Software Engineer"
+          ],
+          "topics": [
+            "References and pointers",
+            "OOP and virtual functions",
+            "STL containers and algorithms",
+            "Memory management and RAII",
+            "Move semantics basics"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "java-backend",
+      "name": "Java Backend Ecosystem",
+      "skills": [
+        {
+          "slug": "spring-framework",
+          "name": "Spring Framework / Spring Core",
+          "priority": "critical",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Software Engineer"
+          ],
+          "topics": [
+            "IoC and dependency injection",
+            "Bean lifecycle and scopes",
+            "Configuration and profiles",
+            "AOP fundamentals"
+          ]
+        },
+        {
+          "slug": "spring-boot",
+          "name": "Spring Boot",
+          "priority": "critical",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "Auto-configuration and starters",
+            "Application lifecycle and configuration",
+            "REST controllers and request lifecycle",
+            "Validation and exception handling",
+            "Actuator and production readiness",
+            "Testing with JUnit and Mockito",
+            "Logging and observability"
+          ]
+        },
+        {
+          "slug": "spring-security",
+          "name": "Spring Security",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer"
+          ],
+          "topics": [
+            "Authentication versus authorization",
+            "Security filter chain",
+            "JWT integration",
+            "Password encoding and session security",
+            "Method-level security",
+            "CORS and CSRF"
+          ]
+        },
+        {
+          "slug": "hibernate-jpa",
+          "name": "Hibernate and JPA",
+          "priority": "critical",
+          "role_relevance": [
+            "Java Backend Developer"
+          ],
+          "topics": [
+            "Entity lifecycle and persistence context",
+            "Entity relationships and mappings",
+            "Lazy versus eager loading",
+            "N+1 query problem",
+            "Transactions and propagation",
+            "JPQL, native queries and pagination",
+            "Optimistic and pessimistic locking"
+          ]
+        },
+        {
+          "slug": "microservices",
+          "name": "Microservices",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Software Engineer"
+          ],
+          "topics": [
+            "Service boundaries and decomposition",
+            "API gateway and service discovery",
+            "Inter-service communication",
+            "Resilience, retries and circuit breakers",
+            "Distributed transactions and eventual consistency",
+            "Observability and configuration"
+          ]
+        },
+        {
+          "slug": "apache-kafka",
+          "name": "Apache Kafka",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer"
+          ],
+          "topics": [
+            "Topics, partitions and offsets",
+            "Producers and consumers",
+            "Consumer groups and rebalancing",
+            "Delivery semantics and idempotency",
+            "Retries, dead-letter topics and ordering",
+            "Spring Kafka integration"
+          ]
+        },
+        {
+          "slug": "spring-ai",
+          "name": "Spring AI, RAG and Tool Calling",
+          "priority": "medium",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Model/provider abstraction",
+            "Prompt templates and structured output",
+            "Embeddings and vector retrieval concepts",
+            "RAG flow and grounding",
+            "Tool/function calling",
+            "Safety, evaluation and cost control"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "frontend",
+      "name": "Frontend Development",
+      "skills": [
+        {
+          "slug": "react",
+          "name": "React",
+          "priority": "high",
+          "role_relevance": [
+            "Full-Stack Developer",
+            "Software Engineer"
+          ],
+          "topics": [
+            "Components, props and state",
+            "Hooks: useState, useEffect, useMemo and useCallback",
+            "Component lifecycle and rendering",
+            "Context and state sharing",
+            "Forms and controlled inputs",
+            "Performance and reconciliation",
+            "Error boundaries and component design"
+          ]
+        },
+        {
+          "slug": "redux",
+          "name": "Redux / Redux Toolkit",
+          "priority": "medium",
+          "role_relevance": [
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Store, actions and reducers",
+            "Redux Toolkit slices",
+            "Selectors and derived state",
+            "Async thunks and API state",
+            "When to use local state versus global state"
+          ]
+        },
+        {
+          "slug": "nextjs",
+          "name": "Next.js",
+          "priority": "medium",
+          "role_relevance": [
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "App Router and layouts",
+            "Server and Client Components",
+            "SSR, SSG and ISR concepts",
+            "Route handlers and server actions",
+            "Caching and revalidation",
+            "Navigation and metadata"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "node-ecosystem",
+      "name": "Node.js Ecosystem",
+      "skills": [
+        {
+          "slug": "nodejs",
+          "name": "Node.js",
+          "priority": "medium",
+          "role_relevance": [
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Event loop and asynchronous I/O",
+            "Modules and package management",
+            "Streams and buffers",
+            "Error handling",
+            "Process and environment configuration"
+          ]
+        },
+        {
+          "slug": "expressjs",
+          "name": "Express.js",
+          "priority": "medium",
+          "role_relevance": [
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Routing and middleware",
+            "Request lifecycle",
+            "Centralized error handling",
+            "Validation and authentication middleware",
+            "REST API structure"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "databases",
+      "name": "Databases and Data Access",
+      "skills": [
+        {
+          "slug": "sql",
+          "name": "SQL",
+          "priority": "critical",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer",
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "SELECT, filtering and sorting",
+            "Joins and aggregations",
+            "Subqueries and CTEs",
+            "Window functions",
+            "Indexes and query plans",
+            "Normalization and denormalization",
+            "ACID, isolation and transactions"
+          ]
+        },
+        {
+          "slug": "mysql",
+          "name": "MySQL",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "InnoDB and indexes",
+            "EXPLAIN and query optimization",
+            "Transactions and isolation",
+            "Constraints and relationships"
+          ]
+        },
+        {
+          "slug": "mongodb",
+          "name": "MongoDB",
+          "priority": "medium",
+          "role_relevance": [
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Document modeling",
+            "Indexes",
+            "Aggregation pipeline",
+            "Embedding versus referencing",
+            "Transactions and consistency"
+          ]
+        },
+        {
+          "slug": "firebase",
+          "name": "Firebase",
+          "priority": "low",
+          "role_relevance": [
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Firebase Authentication",
+            "Firestore data modeling",
+            "Security rules",
+            "Realtime/offline behavior",
+            "Cloud Functions concepts"
+          ]
+        },
+        {
+          "slug": "postgresql-pgvector",
+          "name": "PostgreSQL / pgvector (project experience)",
+          "priority": "medium",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Relational modeling and indexes",
+            "Transactions",
+            "JSONB basics",
+            "Vector embeddings and similarity search concepts",
+            "pgvector use in RAG project"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "api-and-integration",
+      "name": "APIs and Integration",
+      "skills": [
+        {
+          "slug": "rest-apis",
+          "name": "REST APIs",
+          "priority": "critical",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Resource and endpoint design",
+            "HTTP methods and status codes",
+            "Idempotency and pagination",
+            "Validation and error contracts",
+            "API versioning and backward compatibility",
+            "Rate limiting and security"
+          ]
+        },
+        {
+          "slug": "websockets-sse",
+          "name": "WebSockets and Server-Sent Events",
+          "priority": "medium",
+          "role_relevance": [
+            "Full-Stack Developer",
+            "Java Backend Developer"
+          ],
+          "topics": [
+            "WebSocket handshake and lifecycle",
+            "SSE behavior and use cases",
+            "WebSockets versus SSE versus polling",
+            "Reconnect and delivery considerations",
+            "Scaling real-time connections"
+          ]
+        },
+        {
+          "slug": "jwt",
+          "name": "JWT and Token Authentication",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "JWT structure and signing",
+            "Access and refresh token flow",
+            "Expiry, rotation and revocation",
+            "Secure storage and common vulnerabilities"
+          ]
+        },
+        {
+          "slug": "postman",
+          "name": "Postman",
+          "priority": "medium",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Collections and environments",
+            "Auth and variables",
+            "Pre-request and test scripts",
+            "API debugging and automated collection runs"
+          ]
+        },
+        {
+          "slug": "swagger-openapi",
+          "name": "Swagger / OpenAPI",
+          "priority": "medium",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "OpenAPI schema basics",
+            "Request/response documentation",
+            "Schema validation",
+            "API documentation and versioning"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "devops-tools",
+      "name": "Developer Tools and Delivery",
+      "skills": [
+        {
+          "slug": "docker",
+          "name": "Docker",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Images and containers",
+            "Dockerfile layers and caching",
+            "Volumes and networks",
+            "Multi-stage builds",
+            "Container security and environment configuration"
+          ]
+        },
+        {
+          "slug": "kubernetes",
+          "name": "Kubernetes",
+          "priority": "medium",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Pods, Deployments and ReplicaSets",
+            "Services and Ingress",
+            "ConfigMaps and Secrets",
+            "Readiness and liveness probes",
+            "Scaling and resource requests/limits"
+          ]
+        },
+        {
+          "slug": "git-github",
+          "name": "Git and GitHub",
+          "priority": "medium",
+          "role_relevance": [
+            "All target roles"
+          ],
+          "topics": [
+            "Branching and merging",
+            "Merge versus rebase",
+            "Reset, revert and cherry-pick",
+            "Conflict resolution",
+            "Pull requests and code review"
+          ]
+        },
+        {
+          "slug": "maven",
+          "name": "Maven",
+          "priority": "medium",
+          "role_relevance": [
+            "Java Backend Developer"
+          ],
+          "topics": [
+            "Build lifecycle",
+            "Dependency scopes and transitive dependencies",
+            "Plugins and goals",
+            "Profiles and multi-module builds"
+          ]
+        },
+        {
+          "slug": "cicd",
+          "name": "CI/CD and Deployment",
+          "priority": "medium",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Build/test/deploy pipeline",
+            "Environment and secret management",
+            "Artifact and image promotion",
+            "Rollback and release strategies"
+          ]
+        },
+        {
+          "slug": "agile-scrum",
+          "name": "Agile / Scrum",
+          "priority": "medium",
+          "role_relevance": [
+            "All target roles"
+          ],
+          "topics": [
+            "Sprint planning and refinement",
+            "Daily standups and retrospectives",
+            "Estimation and story points",
+            "Definition of done and handling blockers"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "computer-science",
+      "name": "Computer Science Fundamentals",
+      "skills": [
+        {
+          "slug": "dbms",
+          "name": "DBMS Fundamentals",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "Keys and constraints",
+            "Normalization",
+            "Indexes",
+            "Transactions and ACID",
+            "Isolation levels and deadlocks"
+          ]
+        },
+        {
+          "slug": "operating-systems",
+          "name": "Operating Systems",
+          "priority": "medium",
+          "role_relevance": [
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "Processes and threads",
+            "Scheduling",
+            "Memory management",
+            "Synchronization and race conditions",
+            "Deadlocks"
+          ]
+        },
+        {
+          "slug": "computer-networks",
+          "name": "Computer Networks",
+          "priority": "medium",
+          "role_relevance": [
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "TCP versus UDP",
+            "HTTP/HTTPS and TLS",
+            "DNS",
+            "Load balancing basics",
+            "Sockets and connection lifecycle"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "system-design",
+      "name": "System Design",
+      "skills": [
+        {
+          "slug": "lld",
+          "name": "Low-Level Design",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "OOP and SOLID application",
+            "Class and interface design",
+            "Common design patterns",
+            "UML and object relationships",
+            "Extensibility and testability"
+          ]
+        },
+        {
+          "slug": "hld",
+          "name": "High-Level Design",
+          "priority": "medium",
+          "role_relevance": [
+            "Software Engineer",
+            "SDE I"
+          ],
+          "topics": [
+            "Requirements and capacity estimation",
+            "API and data model design",
+            "Caching and load balancing",
+            "Database scaling and partitioning",
+            "Availability and failure handling",
+            "Messaging and asynchronous processing"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "cloud-ai",
+      "name": "Cloud and AI Foundations",
+      "skills": [
+        {
+          "slug": "aws-foundations",
+          "name": "AWS Foundations / AI Practitioner Concepts",
+          "priority": "low",
+          "role_relevance": [
+            "Software Engineer"
+          ],
+          "topics": [
+            "Cloud shared responsibility",
+            "IAM and security basics",
+            "Core cloud service categories",
+            "ML and generative AI fundamentals",
+            "Responsible AI and governance"
+          ]
+        }
+      ]
+    },
+    {
+      "slug": "career-and-projects",
+      "name": "Project and Behavioral Interviews",
+      "skills": [
+        {
+          "slug": "tcs-project-deep-dive",
+          "name": "TCS E-Procurement Project Deep Dive",
+          "priority": "critical",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Architecture and request lifecycle",
+            "REST API design and implementation",
+            "Hibernate/JPA data flow",
+            "Third-party KYC integration",
+            "Validation, exception handling and logging",
+            "Production debugging and defect resolution",
+            "Trade-offs and lessons learned"
+          ]
+        },
+        {
+          "slug": "lovable-project-deep-dive",
+          "name": "Lovable AI Builder Project Deep Dive",
+          "priority": "high",
+          "role_relevance": [
+            "Java Backend Developer",
+            "Full-Stack Developer"
+          ],
+          "topics": [
+            "Architecture and component boundaries",
+            "Spring AI and model integration",
+            "RAG and tool calling flow",
+            "SSE streaming",
+            "PostgreSQL/pgvector data flow",
+            "Docker/Kubernetes deployment",
+            "Challenges, incomplete features and trade-offs"
+          ]
+        },
+        {
+          "slug": "behavioral",
+          "name": "Behavioral and HR Questions",
+          "priority": "high",
+          "role_relevance": [
+            "All target roles"
+          ],
+          "topics": [
+            "Tell me about yourself",
+            "Ownership and conflict",
+            "Production incident or difficult bug",
+            "Learning from failure",
+            "Collaboration and feedback",
+            "Why switch and why this role",
+            "Questions to ask the interviewer"
+          ]
+        }
+      ]
+    }
+  ]
+}

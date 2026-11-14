@@ -1,0 +1,5 @@
+# Prompt - Build the First 30-Day Interview Sprint
+
+Read `AGENTS.md`, `docs/17_INTERVIEW_QUESTION_BANK_AND_SKILL_TAXONOMY.md`, `docs/18_FIRST_30_DAY_INTERVIEW_SPRINT.md`, `docs/09_PHASE_2_LEARNING_AND_PLANNING.md`, `docs/05_DATABASE_AND_DATA_DICTIONARY.md`, and the Grind 75 seed metadata.
+
+Build the 30-day interview sprint preview and task generation flow. The user must set a start date, target role focus and daily available minutes. Combine Grind 75 DSA tasks with technology/topic question-bank tasks and due revisions. Calculate workload using per-question estimates and show an overload warning when the target does not fit. Offer 30-day intensive, capacity-adjusted 45-day and 60-day plans. Do not silently exceed time budgets. Preview first and create tasks only after acceptance. Preserve official Grind 75 order and deduplicate against existing DSA records. At Day 30, generate the Day 31+ prioritized backlog/rolling plan using the documented weights and show reasons for every recommendation. Write tests for schedule generation, capacity limits, timezone/date boundaries, priority scoring and duplicate linking. Do not use AI for deterministic scheduling.

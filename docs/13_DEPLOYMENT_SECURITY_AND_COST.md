@@ -15,8 +15,8 @@ Maintain `.env.example` with variable names and placeholder values, never real s
 Likely variables:
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` or current Supabase publishable key equivalent
-- `OPENROUTER_API_KEY` (Phase 4, server-only)
-- `OPENROUTER_MODEL` (Phase 4, server-side config)
+- `GEMINI_API_KEY` (Phase 4, server-only)
+- `GEMINI_MODEL` (Phase 4, server-side config)
 
 Avoid using a service-role key. If a one-time admin operation genuinely requires it, keep it out of client bundles, restrict its use to a server-only script, and explain why it is needed.
 
