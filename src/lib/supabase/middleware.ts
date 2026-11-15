@@ -2,6 +2,17 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
+export function isProtectedAppRoute(pathname: string): boolean {
+  return (
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/dsa") ||
+    pathname.startsWith("/learning") ||
+    pathname.startsWith("/planner") ||
+    pathname.startsWith("/interview-questions") ||
+    pathname.startsWith("/settings")
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -34,15 +45,8 @@ export async function updateSession(request: NextRequest) {
 
   // Redirect unauthenticated users away from protected app routes.
   const { pathname } = request.nextUrl;
-  const isAppRoute =
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/dsa") ||
-    pathname.startsWith("/learning") ||
-    pathname.startsWith("/planner") ||
-    pathname.startsWith("/interview-questions") ||
-    pathname.startsWith("/settings");
 
-  if (!user && isAppRoute) {
+  if (!user && isProtectedAppRoute(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
