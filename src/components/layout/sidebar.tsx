@@ -74,6 +74,12 @@ const navItems: NavItem[] = [
     phase: "P3",
   },
   {
+    title: "Mock Interview",
+    href: "/interview",
+    icon: Sparkles,
+    phase: "P4",
+  },
+  {
     title: "Settings",
     href: "/settings",
     icon: Settings,

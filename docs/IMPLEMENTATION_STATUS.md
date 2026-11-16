@@ -1,14 +1,79 @@
 # Implementation Status
 
 ## Current Phase
-- **Phase:** 3 — Career Management
+- **Phase:** 4 — AI Career Assistant & Mock Interviews
 - **Batches:**
-  - Batch 1: Project Tracker (`/projects`) — Complete & Verified
-  - Batch 2: Job Application Tracker (`/applications`) — Complete & Verified
-  - Batch 3: Resume & Job Description Manager (`/resume`) — Complete & Verified
-- **Status:** Phase 3 Complete (All 3 Batches Fully Implemented, Tested, and Verified)
+  - Batch 1: Secure Gemini AI Integration Foundation — Complete & Verified
+  - Batch 2: Technical Mock Interview & Answer Coaching Engine — Complete & Verified
+- **Status:** Phase 4 Batch 2 Complete (Mock Interview Workspace, Gemini Evaluation Engine, Results Analytics, and Live Verification Passed; Batch 3 Deferred)
 
 ## Completed
+
+### Phase 4 Batch 2: Technical Mock Interview & Answer Coaching Engine
+- **Mock Interview Setup Experience (`/interview`)**:
+  - Interactive track configuration supporting: Java Backend, Full Stack, Project-Based, DSA, Technical, and Mixed.
+  - Granular skill selection across 25+ resume question bank skills.
+  - Difficulty selection (Basic, Intermediate, Advanced, Mixed) and Question Count (5, 10, 15).
+  - Dynamic duration estimation (~3 mins per question).
+  - Interview history list showing past sessions, scores, track badges, and timestamps.
+- **Question Bank Integration & Sampling**:
+  - Zero duplicate questions within a session.
+  - Balanced round-robin sampling across selected skills from the 376-question bank (`interview_question_bank`).
+  - Seamless fallback to active questions if filters exceed specific counts.
+- **Interactive Interview Workspace (`/interview/[id]`)**:
+  - Displays questions one at a time with track, skill, and difficulty badges.
+  - Multi-line candidate answer input with live character counter (5,000 char maximum).
+  - Candidate actions: "Submit Answer" (triggers Gemini evaluation), "Skip Question" (records skip with zero score, bypasses AI to conserve quota), and "Finish Interview Early".
+  - Offline/failure resilience: Answers pre-saved to database prior to AI execution; "Retry Evaluation" action if AI encounters temporary network/quota issues.
+  - Real-time Gemini evaluation card displaying:
+    - Overall score (0-10) with colored badges.
+    - 5-dimension rubric breakdown (1-5): Technical Correctness, Completeness, Clarity, Practical Depth, Tradeoff Awareness.
+    - Verified strengths list & missing concepts / inaccuracies list.
+    - Constructive, actionable improvement advice.
+    - Expandable ideal interview answer (2-3 paragraphs).
+    - Relevant probing follow-up questions.
+- **Prompt Injection Defense & Security**:
+  - Untrusted candidate answer wrapped strictly in `<candidate_answer>` XML tags.
+  - Strict system instruction prioritizing scoring rubric and question truth over candidate injection instructions.
+  - Robust JSON extraction handling markdown fences and trailing thoughts.
+- **Interview Results Analytics View (`/interview/[id]` when completed)**:
+  - Overall performance banner with score/10, percentage, and completion status.
+  - Summary metrics: Attempted vs. Skipped vs. Unanswered question counts.
+  - Skill performance breakdown meters with average score per skill.
+  - Strong areas vs. Weak areas tags.
+  - Recommended revisions with direct deep links to `/learning` and `/interview-questions?skill=...`.
+  - Comprehensive question review cards with user answers, ideal answers, and feedback.
+- **Navigation & Database Schema**:
+  - Added "Mock Interview" (`/interview`, `Sparkles`, `P4`) to `Sidebar`.
+  - Created migration `0010_phase4_mock_interviews_and_evaluations.sql` for extended analytics columns, with full backward/forward compatibility in service layer.
+
+### Phase 4 Batch 1: Secure Gemini AI Integration Foundation
+- **Official SDK Integration**:
+  - Installed and configured official `@google/genai` TypeScript SDK.
+  - Fully encapsulated in server-only modules (`src/features/ai/`).
+- **Server-Side Environment Security**:
+  - Configured `GEMINI_API_KEY` (server-only secret) and `GEMINI_MODEL` (default: `gemini-2.5-flash`) via `src/lib/env.ts` (`aiEnvSchema` & `getAiConfig`).
+  - Never prefixed with `NEXT_PUBLIC_` and never included in client-accessible bundles.
+  - Automated security tests verify zero presence of `GEMINI_API_KEY` in client environments, error payloads, or API responses.
+- **In-Memory Rate Limiting (`src/features/ai/rate-limiter.ts`)**:
+  - Zero-external-infrastructure sliding window limiter tracking request counts per authenticated user in server memory.
+  - Default: 10 requests per minute per user; returns HTTP 429 with standard `Retry-After` header when exceeded.
+  - Memory-safe automatic pruning of expired tracking records.
+- **Request Size Limits & Zod Validation (`src/features/ai/schema.ts`)**:
+  - Verification prompt capped at 1,000 characters.
+  - General prompt capped at 10,000 characters; max output tokens capped at 8,192.
+  - Strict boundary validation with Zod returning standardized `INVALID_REQUEST` (HTTP 400).
+- **Reusable Server-Side Gemini Service (`src/features/ai/gemini-service.ts`)**:
+  - `GeminiService` class with lazy client initialization, timeout enforcement (AbortSignal + 30s timeout), and content safety handling (`finishReason: "SAFETY"` -> `CONTENT_FILTERED`).
+  - Structured, sanitized error normalization mapping provider errors to safe, user-friendly codes (`MISSING_API_KEY`, `QUOTA_EXCEEDED`, `TIMEOUT`, `CONTENT_FILTERED`, `PROVIDER_ERROR`) without leaking URLs, keys, or stack traces.
+- **Protected Verification Endpoint (`/api/ai/verify`)**:
+  - Enforces Supabase authenticated session via `@supabase/ssr`.
+  - `GET /api/ai/verify`: Returns server configuration status (`configured: boolean`, `model: string`).
+  - `POST /api/ai/verify`: Executes a minimal connectivity generation test with rate limiting and payload validation.
+- **Documentation & Configuration**:
+  - Updated `.env.example` with non-secret placeholder comments.
+  - Comprehensive guide in `docs/GEMINI_API_KEY_SETUP.md` covering key acquisition, local setup, Vercel configuration, rate limits, and cost controls.
+
 
 ### Phase 0: Repository & Tooling Bootstrap
 - Next.js 15 App Router scaffolded with TypeScript and Tailwind CSS.
@@ -138,13 +203,24 @@
 ---
 
 ## Verification Results
-- **Automated Test Suite**: 29 test files, **211 tests passed** with 0 errors (`npm test -- --run`).
+- **Automated Test Suite**: 32 test files, **264 tests passed** with 0 errors (`npm test -- --run`).
 - **TypeScript Typecheck**: `tsc --noEmit` passed with 0 errors (`npm run typecheck`).
 - **ESLint**: passed with 0 errors, 0 warnings (`npm run lint`).
-- **Production Build**: `next build` compiled and optimized all 17 routes without errors.
-- **PostgreSQL 16 Engine Parser**: 100% valid AST validation for Migrations 0008 & 0009 via `pglast` (`libpg_query`).
+- **Production Build**: `next build` compiled and optimized all 19 routes without errors (including `ƒ /interview` and `ƒ /interview/[id]`).
+- **Phase 4 Batch 2 Live Smoke Verification** (`tests/mock-interview-live.test.ts`):
+  - Verified live Gemini AI connectivity via `gemini-3.5-flash`.
+  - Created live interview session querying the 376-question bank in Supabase.
+  - Successfully evaluated candidate answer with real-time scoring, rubric breakdown, actionable suggestions, ideal answer, and follow-ups.
+  - Verified skipping logic bypassing AI to conserve quota.
+  - Verified finalization, summary metrics, and skill breakdown calculations.
+  - Cleaned up all test records leaving zero leftover records.
+- **Phase 4 Batch 1 AI Verification Tests** (`tests/gemini-ai.test.ts`):
+  - 31/31 passed covering missing API key, schema limits, rate limiting, mocked SDK success, safety filter handling, upstream failure mapping, authenticated route protection, and credential leak checks.
+- **PostgreSQL 16 Engine Parser**: 100% valid AST validation for Migrations 0008, 0009, and 0010 via `pglast` (`libpg_query`).
+
 - **Live Supabase Integration & Schema Verification**:
   - Migrations 0008 and 0009 applied and verified on live Supabase instance (`aukdilhlchhnwbqxwpeq.supabase.co`).
+  - Migration 0010 prepared with backward/forward compatible runtime fallbacks.
   - Verified live schema: `job_applications` extended tracking columns, `resumes` primary/extraction columns.
   - Verified live tables: `application_activity`, `application_interview_rounds`, and `job_descriptions`.
   - Verified live atomic database RPC: `public.set_primary_resume(p_resume_id uuid)` with deterministic row locking and two-step primary toggle.

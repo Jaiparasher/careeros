@@ -29,3 +29,21 @@ export const env = parsed.success
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "placeholder-anon-key",
   };
 
+export const aiEnvSchema = z.object({
+  GEMINI_API_KEY: z.string().min(1, "GEMINI_API_KEY must not be empty").optional(),
+  GEMINI_MODEL: z.string().min(1).default("gemini-2.5-flash"),
+});
+
+export function getAiConfig() {
+  const rawKey = process.env.GEMINI_API_KEY?.split("#")[0].trim();
+  const apiKey = rawKey && rawKey.length > 0 ? rawKey : undefined;
+  const rawModel = process.env.GEMINI_MODEL?.split("#")[0].trim();
+  const model = rawModel && rawModel.length > 0 ? rawModel : "gemini-2.5-flash";
+  return {
+    apiKey,
+    model,
+    isConfigured: Boolean(apiKey && apiKey.length > 0),
+  };
+}
+
+
