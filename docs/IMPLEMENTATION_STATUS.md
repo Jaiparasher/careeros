@@ -1,9 +1,12 @@
 # Implementation Status
 
 ## Current Phase
-- **Phase:** 2 — Learning, DSA and Study Planning
-- **Batch:** Batch 2 (Learning Roadmap, Resume-Wide Interview Question Bank & Capacity-Aware 30-Day Sprint)
-- **Status:** Phase 2 Complete (Batch 1 & Batch 2 Fully Implemented and Verified)
+- **Phase:** 3 — Career Management
+- **Batches:**
+  - Batch 1: Project Tracker (`/projects`) — Complete & Verified
+  - Batch 2: Job Application Tracker (`/applications`) — Complete & Verified
+  - Batch 3: Resume & Job Description Manager (`/resume`) — Complete & Verified
+- **Status:** Phase 3 Complete (All 3 Batches Fully Implemented, Tested, and Verified)
 
 ## Completed
 
@@ -66,64 +69,88 @@
 - **Resume-Wide Technical Interview Question Bank (`/interview-questions`)**:
   - Comprehensive seed dataset with **376 distinct curated questions** in `seed-data/interview-question-bank-seed.json`.
   - Zero filler questions; covers all 42 skills and 11 categories without exception.
-  - Priorities strictly enforced: Java, OOP, Collections, JVM, Multithreading, Spring Core, Spring Boot, Spring Security, Hibernate/JPA, REST APIs, SQL, DBMS, Microservices, Kafka, DSA, LLD, and project deep dives prioritized, while fully covering React, Node.js, Next.js, Redux, MongoDB, Firebase, PostgreSQL/pgvector, Docker, Kubernetes, Git, Maven, CI/CD, AWS, and Agile.
-  - Every single question includes:
-    1. Realistic question title and detailed technical prompt.
-    2. Expected answer evaluation rubric (checklist of 3–5 evaluation points).
-    3. Concise, authoritative sample answer with technical depth.
-    4. 1–3 realistic interviewer follow-up probes.
-    5. Difficulty (`basic`, `intermediate`, `advanced`) and Priority (`critical`, `high`, `medium`, `low`).
-    6. Attribution: `"CareerOS curated"`.
-  - Dynamic dual navigation: Skill-first and Topic-first browsing modes with full-text search, category filters, skill filters, difficulty filters, and readiness filters.
-  - Interactive question practice screen (`/interview-questions/[id]`) with collapsible rubric, sample answer, follow-ups, self-assessment confidence rating (1–5 stars), status selector, and spaced revision scheduling (1, 3, 7, 14, 30 days).
-  - Idempotent database seeding (`seedQuestionBankIfEmpty`): never overwrites user attempts, notes, confidence ratings, or revision dates.
+  - Priorities strictly enforced: Java, OOP, Collections, JVM, Multithreading, Spring Core, Spring Boot, Spring Security, Hibernate/JPA, REST APIs, SQL, DBMS, Microservices, Kafka, DSA, LLD, and project deep dives prioritized.
+  - Every question includes prompt, evaluation rubric, sample answer, follow-up probes, difficulty, priority, and CareerOS curated attribution.
+  - Dual navigation (Skill-first and Topic-first) with full-text search, filters, self-assessment, and spaced repetition.
 - **Capacity-Aware Study Sprint & Daily Task Planner (`/planner`)**:
-  - Reads actual `daily_available_minutes` directly from user profile (fallback 120 min).
-  - Calculates daily workload in minutes from individual task estimates.
-  - Surfaces prominent Overload Warnings whenever a day's planned time exceeds the user's available study time.
-  - Generates realistic 30-, 45-, and 60-day alternatives, distributing the 75 Grind 75 Core problems sustainably.
-  - Preview-before-accept workflow (`/planner/sprint`): allows inspecting every day's workload and Grind 75 problem assignments before saving any tasks to the database.
-  - Guarantees all 75 Grind 75 problems are scheduled exactly once as new tasks; links to user's existing `dsa_questions` records without creating duplicate questions or attempts.
-  - Daily Agenda (`daily-agenda.tsx`): date switcher, capacity gauge, task completion toggle, reschedule to tomorrow, and direct links to DSA problems and interview questions.
-  - Day 31+ Adaptive Prioritization (`calculateDay31Prioritization`): transparent scoring formula based on Role Relevance (30%), Knowledge Gaps (25%), Resume Skill Importance (20%), Due Revisions (15%), and Upcoming Interviews (10%).
-- **Dashboard v2 (`/dashboard`)**:
-  - Live Daily Agenda gauge: planned study minutes vs completed minutes against daily budget.
-  - Live DSA Tracker breakdown: Total Tracked, Solved, Needs Revision, and Grind 75 progress (X/75).
-  - Live Question Bank metrics: Prepared count, Strong skills, Due revisions.
-  - Live Course progress re-computed dynamically from `learning_modules`.
-  - "Today's Priority Focus" card: top 3 concrete next actions derived from pending sprint tasks and due spaced revisions.
+  - Capacity calculation from profile study budget, overload warnings, preview-before-accept 30/45/60 day alternatives.
+  - Daily Agenda, task rescheduling, Day 31+ adaptive prioritization algorithm.
 
-## Verification Performed
-- **TDD Test Suites (`vitest run`):** 21 test files, 135 tests passing with 0 errors:
-  - `tests/interview-questions-dataset.test.ts` (5 tests): verifies $\ge 330$ distinct questions (376 total), all 11 categories, all 42 skills, evaluation rubrics, sample answers, follow-up questions, and CareerOS curated attribution.
-  - `tests/interview-service.test.ts` (6 tests): taxonomy coverage, idempotent seeding, skipping existing questions, answer recording, revision scheduling, and database stats aggregation.
-  - `tests/planner-workload.test.ts` (4 tests): daily workload summation, capacity evaluation, overload warning detection, 30/45/60 day schedule generation with all 75 Grind 75 problems.
-  - `tests/planner-service.test.ts` (4 tests): Day 31+ adaptive prioritization weighting, profile capacity extraction, task toggling, and date rescheduling.
-  - `tests/learning-modules.test.ts` (3 tests): 20 Coding Shuttle modules progress.
-  - `tests/learning-topics.test.ts` (3 tests): Rule 8 decoupling of course completion from topic readiness.
-  - `tests/dsa-normalize.test.ts` (20 tests): URL normalization, slug extraction.
-  - `tests/dsa-revision.test.ts` (20 tests): Spaced repetition engine intervals.
-  - `tests/dsa-grind75-sync.test.ts` (3 tests): Idempotent Grind 75 sync and duplicate linking.
-  - `tests/dsa-schema.test.ts` (32 tests): DSA schemas and attempt validation.
-  - `tests/module-seeder.test.ts` (3 tests): Coding Shuttle seeding.
-  - `tests/profile-service.test.ts` (2 tests): Profile service integrity.
-  - `tests/profile-schema.test.ts` (4 tests): Profile schema validation.
-  - `tests/auth-schema.test.ts` (3 tests): Auth schema validation.
-  - `tests/seed-data.test.ts` (5 tests): Seed files integrity.
-  - `tests/domain-progress.test.ts` (5 tests): Course progress math.
-  - `tests/env.test.ts` (4 tests): Environment validation.
-  - `tests/routes.test.ts` (2 tests): Route boundaries.
-  - `tests/supabase-client.test.ts` (1 test): Supabase client initialization.
-  - `tests/interview-catalog.test.ts` (4 tests): Skills catalog validation.
-  - `tests/smoke.test.ts` (2 tests): Smoke tests.
-- **TypeScript Typecheck:** `npm run typecheck` (`tsc --noEmit`) passes with 0 errors.
-- **ESLint:** `npm run lint` passes with 0 errors and 0 warnings.
-- **Production Build:** `npm run build` succeeds cleanly, compiling all 14 routes.
+### Phase 3 Batch 1: Project Tracker (`/projects`)
+- **Project Management**:
+  - Full CRUD for projects (`/projects` and `/projects/[id]`).
+  - Core fields: Name, category, technologies, GitHub repository URL, live deployment URL, status (`planning`, `in_progress`, `completed`, `on_hold`), start date, objectives, key achievements.
+- **Feature & Defect Tracking**:
+  - Project features with priority (`critical`, `high`, `medium`, `low`) and status (`planned`, `in_progress`, `implemented`, `blocked`, `done`).
+  - Defect tracker with severity, reproduction steps, resolution notes, and status (`open`, `investigating`, `resolved`, `wont_fix`).
+- **Architecture & Interview Defense**:
+  - High-level architecture decisions, system design trade-offs, scaling considerations.
+  - Interview defense cheat-sheet: technical elevator pitch, hardest challenges, technical trade-offs, and metrics defense.
+- **Idempotent Lovable Project Seeding**:
+  - Verified facts only from profile and documentation; zero fabricated metrics or URLs.
 
-## Database Migrations Applied
-1. `supabase/migrations/0001_profiles_and_learning_modules.sql`
-2. `supabase/migrations/0002_dsa_topics_and_planner.sql`
-3. `supabase/migrations/0006_question_bank_and_sprint_plans.sql`
+### Phase 3 Batch 2: Job Application Tracker (`/applications`)
+- **Job Application Management**:
+  - Full CRUD (`/applications` and `/applications/[id]`).
+  - Company, role title, job description, job URL, careers URL, location, work mode (`remote`, `hybrid`, `onsite`), employment type (`full_time`, `contract`, `internship`, `part_time`).
+  - Salary range (min/max LPA), expected CTC, applied salary LPA.
+  - Recruiter contact info, referral contact, referral status.
+- **11-Stage Pipeline**:
+  - Interested, Applied, Referral Requested, Screening, Technical Round 1, Technical Round 2, Managerial Round, HR Round, Offer, Rejected, On Hold.
+  - Kanban board and interactive Table view with search, filtering, and sorting.
+  - In-flight duplicate detection based on company, role title, and job URL.
+- **Interview Rounds & Activity History**:
+  - Multi-round interview tracking (round name, interviewer, topics, questions asked, performance notes, result).
+  - Activity audit log recording previous stage, new stage, timestamp, and notes.
+- **Follow-up & Offer Management**:
+  - Follow-up alerts bar (due today, overdue, upcoming interviews, awaiting response, offers).
+  - Copyable recruiter outreach and referral request message templates (no automatic email dispatch).
 
-## Next Phase
-- **Phase 3:** Target Roles, Projects, Resumes, and Application Tracking.
+### Phase 3 Batch 3: Resume & Job Description Manager (`/resume`)
+- **Private Resume Storage & Version Management**:
+  - Upload PDF and Word (.docx) resumes up to 10MB to private Supabase Storage bucket `career-files`.
+  - Secure signed download URLs (60-second expiration); zero public file exposure.
+  - Multiple resume versions with target role, notes, creation dates, and file size.
+  - Single primary resume constraint enforced via database-level partial unique index (`resumes_user_primary_uidx`) and transactional service logic.
+  - Safe cascade deletion removing files from storage and database.
+- **Server-Side Text Extraction**:
+  - Server-side PDF parsing (`pdf-parse`) and DOCX body extraction (`mammoth`).
+  - Non-crashing error handling for empty or malformed files with clear user guidance.
+  - Extraction status tracking: `pending`, `completed`, `failed`, `manual`.
+  - Built-in Extracted Text Viewer and manual editor modal allowing users to paste/edit resume text when documents are scanned images.
+- **Job Description Manager**:
+  - Save multiple job descriptions with Company, Role Title, Target Domain, raw text, and personal notes.
+  - Link directly to existing job applications from the user's pipeline.
+  - Automatic detection of taxonomy skills in JD text.
+- **Deterministic Resume vs. JD Alignment Engine**:
+  - 100% deterministic (no Gemini / external AI in Phase 3).
+  - Categorizes skills into:
+    1. **Explicitly Matching Skills**: exact match in resume text (with alias resolution).
+    2. **Partially Demonstrated Skills**: candidate demonstrates foundational or sibling skills in the same taxonomy domain (e.g. Java/Spring Boot for Spring Security, Docker for Kubernetes).
+    3. **Missing Skills**: skills required in JD with zero evidence in resume.
+    4. **Missing Domain Keywords**: technical keywords in JD absent from resume (e.g. Redis, Prometheus, Kafka).
+    5. **Actionable Resume Bullet Improvements**: concrete recommendations incorporating the Google X-Y-Z formula.
+    6. **Interview Question Bank Integration**: links missing/partial skills directly to relevant questions in `/interview-questions?category=...`.
+  - Prominent non-ATS disclaimer: "Deterministic Keyword & Skill Analysis — This is a deterministic skill taxonomy alignment tool based on resume text and JD keywords. It is not an official proprietary ATS score or predictor."
+- **Navigation**:
+  - Added "Resume & JD" nav item (`/resume`, `FileText`, `P3`) to `Sidebar`.
+
+---
+
+## Verification Results
+- **Automated Test Suite**: 29 test files, **211 tests passed** with 0 errors (`npm test -- --run`).
+- **TypeScript Typecheck**: `tsc --noEmit` passed with 0 errors (`npm run typecheck`).
+- **ESLint**: passed with 0 errors, 0 warnings (`npm run lint`).
+- **Production Build**: `next build` compiled and optimized all 17 routes without errors.
+- **PostgreSQL 16 Engine Parser**: 100% valid AST validation for Migrations 0008 & 0009 via `pglast` (`libpg_query`).
+- **Live Supabase Integration & Schema Verification**:
+  - Migrations 0008 and 0009 applied and verified on live Supabase instance (`aukdilhlchhnwbqxwpeq.supabase.co`).
+  - Verified live schema: `job_applications` extended tracking columns, `resumes` primary/extraction columns.
+  - Verified live tables: `application_activity`, `application_interview_rounds`, and `job_descriptions`.
+  - Verified live atomic database RPC: `public.set_primary_resume(p_resume_id uuid)` with deterministic row locking and two-step primary toggle.
+  - Verified live composite foreign keys: `(application_id, user_id)` and `(resume_id, user_id)` preventing cross-tenant linking.
+  - Verified live `ON DELETE SET NULL (application_id)`: parent application deletion nullifies child JD link while preserving `user_id` and the JD entity.
+  - Verified live interview round persistence: multi-round tracking with PostgreSQL text arrays (`topics`, `questions_asked`).
+  - Verified live application activity persistence: stage transition audit logging.
+  - Verified two-user multi-tenant RLS isolation: User B strictly prevented from reading, mutating, or uploading to User A's entities.
+  - Zero data loss: Existing user records and baseline data completely preserved.

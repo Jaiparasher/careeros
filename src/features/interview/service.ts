@@ -147,11 +147,25 @@ export async function getQuestions(
     .eq("is_active", true);
 
   if (filter?.category) {
-    query = query.eq("skill_category", filter.category);
+    const cat = filter.category.toLowerCase();
+    const catHyphen = cat.replace(/_/g, "-");
+    const catUnderscore = cat.replace(/-/g, "_");
+    if (catHyphen === catUnderscore) {
+      query = query.eq("skill_category", cat);
+    } else {
+      query = query.in("skill_category", [catHyphen, catUnderscore]);
+    }
   }
 
   if (filter?.skill) {
-    query = query.eq("skill_slug", filter.skill);
+    const sk = filter.skill.toLowerCase();
+    const skHyphen = sk.replace(/_/g, "-");
+    const skUnderscore = sk.replace(/-/g, "_");
+    if (skHyphen === skUnderscore) {
+      query = query.eq("skill_slug", sk);
+    } else {
+      query = query.in("skill_slug", [skHyphen, skUnderscore]);
+    }
   }
 
   if (filter?.topic) {
@@ -282,7 +296,15 @@ export async function getQuestionBankStats(
   const needsRevision = rows.filter((r) => r.status === "needs_revision").length;
 
   const categoryStats = INTERVIEW_TAXONOMY.map((cat) => {
-    const catRows = rows.filter((r) => r.skill_category === cat.id);
+    const catRows = rows.filter((r) => {
+      const rCat = (r.skill_category || "").toLowerCase();
+      const cId = cat.id.toLowerCase();
+      return (
+        rCat === cId ||
+        rCat === cId.replace(/-/g, "_") ||
+        rCat === cId.replace(/_/g, "-")
+      );
+    });
     const catTotal = catRows.length;
     const catAnswered = catRows.filter(
       (r) => r.status === "answered" || r.status === "strong"

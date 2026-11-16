@@ -10,6 +10,9 @@ import {
   GraduationCap,
   CalendarCheck2,
   HelpCircle,
+  FolderGit2,
+  Briefcase,
+  FileText,
   Settings,
   Sparkles,
 } from "lucide-react";
@@ -51,6 +54,24 @@ const navItems: NavItem[] = [
     href: "/interview-questions",
     icon: HelpCircle,
     phase: "P2",
+  },
+  {
+    title: "Project Tracker",
+    href: "/projects",
+    icon: FolderGit2,
+    phase: "P3",
+  },
+  {
+    title: "Job Tracker",
+    href: "/applications",
+    icon: Briefcase,
+    phase: "P3",
+  },
+  {
+    title: "Resume & JD",
+    href: "/resume",
+    icon: FileText,
+    phase: "P3",
   },
   {
     title: "Settings",

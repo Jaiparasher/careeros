@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { getActivePlan, getDayAgenda, getPlanOverallStats } from "@/features/planner/service";
 import { getQuestionBankStats, type QuestionBankStats } from "@/features/interview/service";
+import { getDSAStats } from "@/features/dsa/service";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -66,18 +67,49 @@ export default async function DashboardPage() {
     : null;
 
   // 4. Fetch live DSA statistics
-  const { data: dsaRows } = await supabase
-    .from("dsa_questions")
-    .select("id, status, collection_tags, is_active")
-    .eq("user_id", user.id)
-    .eq("is_active", true);
+  let dsaStats = {
+    total: 0,
+    not_started: 0,
+    attempted: 0,
+    solved: 0,
+    needs_revision: 0,
+    grind75_linked: 0,
+    grind75_solved: 0,
+    overdue_revisions: 0,
+  };
+  try {
+    dsaStats = await getDSAStats(supabase, user.id);
+  } catch (err) {
+    console.error("Failed to fetch DSA stats:", err);
+  }
 
-  const allDsa = dsaRows || [];
-  const totalDsaTracked = allDsa.length;
-  const dsaSolved = allDsa.filter((q) => q.status === "completed" || q.status === "solved").length;
-  const grind75Solved = allDsa.filter(
-    (q) => (q.status === "completed" || q.status === "solved") && q.collection_tags?.includes("grind75")
+  // Also query if any Grind 75 / DSA task was completed in the Daily Planner (study_tasks)
+  const { data: completedDsaTasks } = await supabase
+    .from("study_tasks")
+    .select("question_id")
+    .eq("user_id", user.id)
+    .eq("status", "completed")
+    .not("question_id", "is", null);
+
+  const completedTaskQuestionIds = new Set(
+    (completedDsaTasks || []).map((t) => t.question_id).filter(Boolean)
+  );
+
+  // Check Grind 75 questions unioning DSA table status and completed planner tasks
+  const { data: grindQuestions } = await supabase
+    .from("dsa_questions")
+    .select("id, status")
+    .eq("user_id", user.id)
+    .is("archived_at", null)
+    .contains("collection_tags", ["grind75"]);
+
+  const effectiveGrind75Solved = (grindQuestions || []).filter(
+    (q) => q.status === "solved" || completedTaskQuestionIds.has(q.id)
   ).length;
+
+  const totalDsaTracked = dsaStats.total;
+  const dsaSolved = Math.max(dsaStats.solved, effectiveGrind75Solved);
+  const grind75Solved = Math.max(dsaStats.grind75_solved, effectiveGrind75Solved);
 
   const { data: dueDsaRevs } = await supabase
     .from("revision_schedules")
@@ -86,7 +118,7 @@ export default async function DashboardPage() {
     .eq("status", "pending")
     .lte("scheduled_for", todayStr);
 
-  const dueDsaCount = (dueDsaRevs || []).length;
+  const dueDsaCount = Math.max((dueDsaRevs || []).length, dsaStats.overdue_revisions);
 
   // 5. Fetch live Interview Question Bank statistics
   let qbStats: QuestionBankStats = { total: 0, answered: 0, strong: 0, needsRevision: 0, categoryStats: [] };

@@ -17,25 +17,27 @@ describe("Interview Taxonomy", () => {
     const categories = getAllCategories();
     expect(categories.length).toBe(11);
     const categoryIds = categories.map((c) => c.id);
-    expect(categoryIds).toContain("programming_languages");
-    expect(categoryIds).toContain("java_backend");
+    expect(categoryIds).toContain("programming-languages");
+    expect(categoryIds).toContain("java-backend");
     expect(categoryIds).toContain("databases");
     expect(categoryIds).toContain("frontend");
-    expect(categoryIds).toContain("api_and_integration");
-    expect(categoryIds).toContain("devops_tools");
-    expect(categoryIds).toContain("computer_science");
-    expect(categoryIds).toContain("system_design");
-    expect(categoryIds).toContain("cloud_ai");
-    expect(categoryIds).toContain("career_and_projects");
-    expect(categoryIds).toContain("node_ecosystem");
+    expect(categoryIds).toContain("api-and-integration");
+    expect(categoryIds).toContain("devops-tools");
+    expect(categoryIds).toContain("computer-science");
+    expect(categoryIds).toContain("system-design");
+    expect(categoryIds).toContain("cloud-ai");
+    expect(categoryIds).toContain("career-and-projects");
+    expect(categoryIds).toContain("node-ecosystem");
   });
 
-  it("covers all 42 skills", () => {
+  it("covers all 42 skills and supports both hyphen and underscore lookups", () => {
     const skills = getAllSkills();
     expect(skills.length).toBe(42);
     expect(getSkillBySlug("java")?.name).toBe("Java");
     expect(getSkillBySlug("spring_boot")?.priority).toBe("critical");
+    expect(getSkillBySlug("spring-boot")?.priority).toBe("critical");
     expect(getCategoryById("java_backend")?.name).toContain("Java Backend");
+    expect(getCategoryById("java-backend")?.name).toContain("Java Backend");
   });
 });
 
@@ -158,7 +160,9 @@ describe("Interview Service Logic", () => {
     expect(stats.strong).toBe(2);
     expect(stats.needsRevision).toBe(1);
 
-    const javaCat = stats.categoryStats.find((c) => c.categoryId === "java_backend");
+    const javaCat = stats.categoryStats.find(
+      (c) => c.categoryId === "java-backend" || c.categoryId === "java_backend"
+    );
     expect(javaCat?.total).toBe(3);
     expect(javaCat?.answered).toBe(2);
   });

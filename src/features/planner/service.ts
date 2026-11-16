@@ -426,6 +426,16 @@ export async function toggleTaskStatus(
     throw new Error(`Failed to update task status: ${error.message}`);
   }
 
+  // If a DSA problem task was checked off on the planner, sync its status in dsa_questions
+  if (completed && data?.question_id) {
+    await supabase
+      .from("dsa_questions")
+      .update({ status: "solved", updated_at: new Date().toISOString() })
+      .eq("id", data.question_id)
+      .eq("user_id", userId)
+      .eq("status", "not_started");
+  }
+
   return data as StudyTaskItem;
 }
 

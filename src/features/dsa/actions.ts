@@ -118,6 +118,8 @@ export async function addQuestionAction(formData: unknown): Promise<ActionResult
   }
 
   revalidatePath('/dsa')
+  revalidatePath('/dashboard')
+  revalidatePath('/planner')
   return { success: true }
 }
 
@@ -154,6 +156,9 @@ export async function updateQuestionAction(id: string, formData: unknown): Promi
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/dsa')
+  revalidatePath(`/dsa/${id}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/planner')
   return { success: true }
 }
 
@@ -171,6 +176,9 @@ export async function archiveQuestionAction(id: string): Promise<ActionResult> {
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/dsa')
+  revalidatePath(`/dsa/${id}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/planner')
   return { success: true }
 }
 
@@ -271,6 +279,9 @@ export async function recordAttemptAction(
   }
 
   revalidatePath('/dsa')
+  revalidatePath(`/dsa/${questionId}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/planner')
   return { success: true }
 }
 
@@ -334,6 +345,9 @@ export async function completeRevisionAction(revisionId: string): Promise<Action
   }
 
   revalidatePath('/dsa')
+  revalidatePath(`/dsa/${revision.question_id}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/planner')
   return { success: true }
 }
 
@@ -384,6 +398,9 @@ export async function rescheduleRevisionAction(
   if (newErr) return { success: false, error: newErr.message }
 
   revalidatePath('/dsa')
+  revalidatePath(`/dsa/${existing.question_id}`)
+  revalidatePath('/dashboard')
+  revalidatePath('/planner')
   return { success: true }
 }
 
@@ -404,6 +421,8 @@ export async function skipRevisionAction(
   if (error) return { success: false, error: error.message }
 
   revalidatePath('/dsa')
+  revalidatePath('/dashboard')
+  revalidatePath('/planner')
   return { success: true }
 }
 
