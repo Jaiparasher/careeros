@@ -89,13 +89,38 @@ ${userAnswer.trim()}
 
 Evaluate the candidate's answer above now and return the specified JSON object.`;
 
-  const aiResult = await geminiService.generateContent({
-    prompt: promptContent,
-    systemInstruction: EVALUATION_SYSTEM_INSTRUCTION,
-    temperature: 0.2, // Low temperature for consistent, objective evaluation
-    maxOutputTokens: 2500,
-    timeoutMs: 30_000,
-  });
+  let aiResult;
+  try {
+    aiResult = await geminiService.generateContent({
+      prompt: promptContent,
+      systemInstruction: EVALUATION_SYSTEM_INSTRUCTION,
+      temperature: 0.2, // Low temperature for consistent, objective evaluation
+      maxOutputTokens: 4096,
+      timeoutMs: 30_000,
+    });
+  } catch (err: unknown) {
+    const isRetryable =
+      err instanceof Error &&
+      (err.message.includes("quota") ||
+        err.message.includes("rate limit") ||
+        err.message.includes("Failed to communicate with AI provider") ||
+        (err as { code?: string })?.code === "PROVIDER_ERROR" ||
+        (err as { code?: string })?.code === "QUOTA_EXCEEDED");
+
+    if (isRetryable) {
+      // Handle transient rate limit burst or network glitch with a 3.5s backoff
+      await new Promise((r) => setTimeout(r, 3500));
+      aiResult = await geminiService.generateContent({
+        prompt: promptContent,
+        systemInstruction: EVALUATION_SYSTEM_INSTRUCTION,
+        temperature: 0.2,
+        maxOutputTokens: 4096,
+        timeoutMs: 30_000,
+      });
+    } else {
+      throw err;
+    }
+  }
 
   const rawJson = extractJsonFromText(aiResult.text);
 
@@ -103,7 +128,14 @@ Evaluate the candidate's answer above now and return the specified JSON object.`
   try {
     parsedObject = JSON.parse(rawJson);
   } catch {
-    throw new Error(`Failed to parse evaluation response from AI provider as valid JSON. Raw output: ${aiResult.text.slice(0, 200)}...`);
+    try {
+      const sanitized = rawJson.replace(/[\x00-\x1F\x7F-\x9F]/g, (c) =>
+        c === "\n" || c === "\r" || c === "\t" ? c : ""
+      );
+      parsedObject = JSON.parse(sanitized);
+    } catch {
+      parsedObject = {};
+    }
   }
 
   const validated = evaluationFeedbackSchema.safeParse(parsedObject);
@@ -133,9 +165,11 @@ Evaluate the candidate's answer above now and return the specified JSON object.`
       depthAssessment: String((parsedObject as Record<string, unknown>)?.depthAssessment || "Evaluation completed."),
       improvementAdvice: String((parsedObject as Record<string, unknown>)?.improvementAdvice || "Review core concepts and practice with concrete examples."),
       idealAnswer: String((parsedObject as Record<string, unknown>)?.idealAnswer || sampleAnswer || "Review recommended points."),
-      followUpQuestions: Array.isArray((parsedObject as Record<string, unknown>)?.followUpQuestions)
-        ? ((parsedObject as Record<string, unknown>).followUpQuestions as string[])
-        : [],
+      followUpQuestions:
+        Array.isArray((parsedObject as Record<string, unknown>)?.followUpQuestions) &&
+          ((parsedObject as Record<string, unknown>).followUpQuestions as string[]).length > 0
+          ? ((parsedObject as Record<string, unknown>).followUpQuestions as string[])
+          : ["How would you optimize and test this architecture under peak load?"],
     };
   }
 

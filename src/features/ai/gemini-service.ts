@@ -201,7 +201,36 @@ export class GeminiService {
         },
       });
 
-      const response = await Promise.race([responsePromise, timeoutPromise]);
+      let response;
+      try {
+        response = await Promise.race([responsePromise, timeoutPromise]);
+      } catch (callErr: unknown) {
+        const rawErrStr = callErr instanceof Error ? callErr.message : String(callErr);
+        if (
+          rawErrStr.includes("503") ||
+          rawErrStr.includes("high demand") ||
+          rawErrStr.includes("UNAVAILABLE") ||
+          rawErrStr.includes("429") ||
+          rawErrStr.includes("quota")
+        ) {
+          // Automatic 4s backoff retry for transient Google high demand spikes
+          await new Promise((r) => setTimeout(r, 4000));
+          const retryPromise = client.models.generateContent({
+            model,
+            contents: options.prompt,
+            config: {
+              systemInstruction: options.systemInstruction,
+              temperature: options.temperature,
+              maxOutputTokens: options.maxOutputTokens,
+              abortSignal: controller.signal,
+            },
+          });
+          response = await Promise.race([retryPromise, timeoutPromise]);
+        } else {
+          throw callErr;
+        }
+      }
+
       if (timer) clearTimeout(timer);
 
       const candidate = response.candidates?.[0];

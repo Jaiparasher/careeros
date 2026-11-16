@@ -496,7 +496,9 @@ export class MockInterviewService {
       ...evaluation.incorrectStatements.map((i) => `Correction: ${i}`),
     ].join("; ") || "Minor refinements only.";
 
-    const primaryFollowUp = evaluation.followUpQuestions[0] || null;
+    const primaryFollowUp =
+      evaluation.followUpQuestions[0] ||
+      "How would you handle edge cases for this implementation in production?";
 
     const fullUpdatePayload: Record<string, unknown> = {
       user_answer: answer.trim(),

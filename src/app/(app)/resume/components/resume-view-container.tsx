@@ -6,6 +6,7 @@ import { ResumeVersionCard } from "./resume-version-card";
 import { ResumeUploadModal } from "./resume-upload-modal";
 import { JdManager } from "./jd-manager";
 import { JdAnalysisView } from "./jd-analysis-view";
+import { AiAnalysisTab } from "./ai-analysis-tab";
 import { FileText, FileCode, Sparkles, UploadCloud } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -26,7 +27,9 @@ export function ResumeViewContainer({
   jobDescriptions,
   applications,
 }: ResumeViewContainerProps) {
-  const [activeTab, setActiveTab] = useState<"resumes" | "jds" | "analysis">("resumes");
+  const [activeTab, setActiveTab] = useState<
+    "resumes" | "jds" | "analysis" | "ai-intelligence"
+  >("resumes");
   const [targetResumeId, setTargetResumeId] = useState<string | undefined>(
     resumes.find((r) => r.is_primary)?.id || resumes[0]?.id
   );
@@ -53,11 +56,10 @@ export function ResumeViewContainer({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setActiveTab("resumes")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
-              activeTab === "resumes"
-                ? "bg-neutral-800 text-neutral-100 shadow-sm border border-neutral-700"
-                : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900"
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${activeTab === "resumes"
+              ? "bg-neutral-800 text-neutral-100 shadow-sm border border-neutral-700"
+              : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900"
+              }`}
           >
             <FileText className="h-4 w-4 text-emerald-400" />
             <span>Resume Versions</span>
@@ -71,11 +73,10 @@ export function ResumeViewContainer({
 
           <button
             onClick={() => setActiveTab("jds")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
-              activeTab === "jds"
-                ? "bg-neutral-800 text-neutral-100 shadow-sm border border-neutral-700"
-                : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900"
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${activeTab === "jds"
+              ? "bg-neutral-800 text-neutral-100 shadow-sm border border-neutral-700"
+              : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900"
+              }`}
           >
             <FileCode className="h-4 w-4 text-sky-400" />
             <span>Job Descriptions</span>
@@ -89,14 +90,27 @@ export function ResumeViewContainer({
 
           <button
             onClick={() => setActiveTab("analysis")}
-            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
-              activeTab === "analysis"
-                ? "bg-neutral-800 text-neutral-100 shadow-sm border border-neutral-700"
-                : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900"
-            }`}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${activeTab === "analysis"
+              ? "bg-neutral-800 text-neutral-100 shadow-sm border border-neutral-700"
+              : "text-neutral-400 hover:text-neutral-200 hover:bg-neutral-900"
+              }`}
+          >
+            <Sparkles className="h-4 w-4 text-neutral-400" />
+            <span>Skill Alignment</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("ai-intelligence")}
+            className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold transition ${activeTab === "ai-intelligence"
+              ? "bg-amber-950/40 text-amber-200 shadow-sm border border-amber-800/80"
+              : "text-amber-400 hover:text-amber-200 hover:bg-neutral-900"
+              }`}
           >
             <Sparkles className="h-4 w-4 text-amber-400" />
-            <span>Skill Alignment</span>
+            <span>AI Match &amp; Coach</span>
+            <Badge className="bg-amber-500/20 text-amber-300 border-amber-500/30 text-[9px] px-1.5 py-0">
+              Gemini AI
+            </Badge>
           </button>
         </div>
 
@@ -155,6 +169,17 @@ export function ResumeViewContainer({
         <JdAnalysisView
           resumes={resumes}
           jobDescriptions={jobDescriptions}
+          initialResumeId={targetResumeId}
+          initialJdId={targetJdId}
+        />
+      )}
+
+      {/* Tab 4: AI Resume/JD Intelligence (Gemini Powered) */}
+      {activeTab === "ai-intelligence" && (
+        <AiAnalysisTab
+          resumes={resumes}
+          jobDescriptions={jobDescriptions}
+          applications={applications}
           initialResumeId={targetResumeId}
           initialJdId={targetJdId}
         />

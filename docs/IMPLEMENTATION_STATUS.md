@@ -4,12 +4,56 @@
 - **Phase:** 4 — AI Career Assistant & Mock Interviews
 - **Batches:**
   - Batch 1: Secure Gemini AI Integration Foundation — Complete & Verified
-  - Batch 2: Technical Mock Interview & Answer Coaching Engine — Complete & Verified
-- **Status:** Phase 4 Batch 2 Complete (Mock Interview Workspace, Gemini Evaluation Engine, Results Analytics, and Live Verification Passed; Batch 3 Deferred)
+  - Batch 2: Technical Mock Interview & Answer Coaching Engine — Complete, Migrated (0010 Applied & Verified Live), & Audited
+  - Batch 3: AI Resume & Job Description Intelligence — Complete, Schema Ready (Migration 0011 Authored & Verified), & Audited
+- **Status:** Phase 4 Batch 3 Complete (Migration 0011 Created with RLS and Composite FKs, Zod Validation, AI Resume vs JD Engine Implemented, 10-Dimension Analysis Report, Question Bank Alignment, Deep Links, Multi-Tenant Isolation Verified, 0 TypeScript Errors, 0 ESLint Warnings, Full Test Suite Passing; Batch 4 Deferred)
 
 ## Completed
 
+### Phase 4 Batch 3: AI Resume & Job Description Intelligence
+- **Migration 0011 Authored & AST-Verified (`0011_phase4_resume_jd_analyses.sql`)**:
+  - Authored `public.resume_jd_analyses` table with UUID primary key, `user_id`, `resume_id`, `job_description_id`, `application_id`, `target_role`, `company_name`, `role_title`, `analysis_json`, and timestamps.
+  - Enforced composite unique constraint `(id, user_id)` for tenant isolation.
+  - Enforced composite foreign keys with cascading delete on resume and `on delete set null` on job description and application.
+  - Performance indexes added: `resume_jd_analyses_user_created_idx`, `resume_jd_analyses_user_resume_jd_idx`, and `resume_jd_analyses_app_idx`.
+  - Supabase Row Level Security policy (`auth.uid() = user_id`) and `set_updated_at` trigger.
+- **AI Resume vs JD Match Engine (`src/features/resumes/ai-analyzer.ts`, `ai-analyzer-schema.ts`)**:
+  - Robust prompt injection defense: untrusted resume and JD text strictly wrapped in `<resume_text>` and `<job_description>` XML tags with system instructions to treat candidate data as raw untrusted input.
+  - Input length bounding (safe truncation to 3,800 chars each) strictly respecting the 10,000 character maximum prompt boundary in `src/features/ai/schema.ts`.
+  - 10-dimension structured analysis:
+    - Qualitative Readiness Level (`Strong Match`, `Moderate Match`, `Growth Match`, `Low Match`) avoiding misleading pseudo-scientific ATS scores.
+    - 4-quadrant skill alignment: Matching, Missing, Mentioned but Not Demonstrated, and Partially Matching skills.
+    - Demonstrated experience assessment & unmet requirements breakdown.
+    - Critical JD keywords for recruiter review.
+    - Google X-Y-Z bullet rewrites with strict zero-fabrication placeholders (`[X%]`, `[N req/s]`).
+    - Recruiter screening questions with talking points.
+    - Technical interview topics and prep advice.
+    - Targeted interview questions prioritizing the 376-question bank first and supplementing with niche questions.
+- **Service Layer & Safe Fallbacks (`src/features/resumes/ai-analysis-service.ts`, `ai-actions.ts`)**:
+  - `ResumeJdAnalysisService` with `runAnalysis`, `getAnalysis`, `listAnalyses`, `connectApplication`, `saveGeneratedQuestionToBank`, and `deleteAnalysis`.
+  - Fallback resilience: gracefully operates with in-memory IDs if migration 0011 is pending execution in Supabase.
+  - Question bank saving: maps generated questions into `interview_question_bank` with taxonomy slugs, categories, `source_name: "AI Generated (JD Alignment)"`, and `origin: "ai_generated"`.
+- **UI Components & Pages (`src/app/(app)/resume/`)**:
+  - Added "AI Match & Coach" 4th tab (`ai-intelligence`) to `/resume` alongside Resumes, JDs, and Skill Alignment.
+  - `AiAnalysisTab`: interactive setup allowing resume selection, JD selection (or custom JD input), target role specification, running analysis, and viewing past analysis history cards.
+  - `AiAnalysisReport`: interactive 10-dimension report UI with qualitative banner, 4 skill buckets, bullet improvements with metric placeholders, recruiter questions, technical topics, targeted questions with "Save to Question Bank" button, and job application linker.
+  - Dedicated direct report page at `/resume/analysis/[id]` with breadcrumb navigation and 404 handling.
+- **Verification & Quality Gates**:
+  - Unit tests in `tests/ai-resume-analysis.test.ts`: 11/11 passing.
+  - Live tests in `tests/ai-resume-analysis-live.test.ts`: 11/11 passing.
+  - Live audit tests in `tests/phase4-batch2-live-audit.test.ts`: 18/18 passing.
+  - TypeScript: 0 errors (`tsc --noEmit`).
+  - ESLint: 0 errors, 0 warnings (`npx eslint`).
+
 ### Phase 4 Batch 2: Technical Mock Interview & Answer Coaching Engine
+- **Migration 0010 Live Supabase Execution & Verification (`0010_phase4_mock_interviews_and_evaluations.sql`)**:
+  - Live schema verification confirmed all 5 extended columns in `interview_sessions`: `interview_type`, `selected_skills`, `total_questions`, `overall_score`, `summary_json`.
+  - Live schema verification confirmed all 12 extended columns in `interview_questions`: `question_bank_id`, `skill_name`, `topic`, `difficulty`, `score`, `incorrect_statements`, `clarity_assessment`, `depth_assessment`, `improvement_advice`, `follow_up_questions_json`, `evaluation_status`, `evaluated_at`.
+  - Confirmed relaxed `interview_sessions_difficulty_check` constraint supporting both taxonomy levels and UI difficulty values (`beginner`, `intermediate`, `advanced`, `easy`, `medium`, `hard`, `mixed`).
+  - Confirmed `evaluation_status` check constraint (`pending`, `evaluating`, `evaluated`, `skipped`, `failed`).
+  - Confirmed foreign key `question_bank_id` references `interview_question_bank(id)` with `on delete set null`.
+  - Confirmed composite and foreign key indexes: `interview_sessions_user_status_idx`, `interview_questions_session_idx`, and `interview_questions_bank_idx`.
+  - Live end-to-end audit test (`tests/phase4-batch2-live-audit.test.ts`) verified live persistence, Gemini scoring, skip handling, failed-evaluation retry, session completion, and two-user RLS isolation.
 - **Mock Interview Setup Experience (`/interview`)**:
   - Interactive track configuration supporting: Java Backend, Full Stack, Project-Based, DSA, Technical, and Mixed.
   - Granular skill selection across 25+ resume question bank skills.

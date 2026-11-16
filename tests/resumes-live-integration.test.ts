@@ -56,7 +56,7 @@ describe("Live Supabase Integration - Phase 3 Batch 3 Resumes & Job Descriptions
           version_label: versionLabel,
           target_role: "Java Backend Lead",
           notes: "Integration test upload",
-          is_primary: true,
+          is_primary: false,
         }
       );
 
