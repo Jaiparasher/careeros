@@ -2,8 +2,9 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { ResumeJdAnalysisService } from "@/features/resumes/ai-analysis-service";
+import { getResumeApplicationOptions } from "@/features/resumes/service";
 import { AiAnalysisReport } from "../../components/ai-analysis-report";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { AlertCircle, ArrowLeft, Sparkles } from "lucide-react";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -21,25 +22,16 @@ export default async function ResumeAnalysisDetailPage({ params }: PageProps) {
   }
 
   const service = new ResumeJdAnalysisService(supabase);
-  const [report, applicationsRes] = await Promise.all([
+  const [report, applicationsResult] = await Promise.all([
     service.getAnalysis(user.id, id),
-    supabase
-      .from("job_applications")
-      .select("id, company_name, role_title")
-      .eq("user_id", user.id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+    getResumeApplicationOptions(supabase, user.id),
   ]);
 
   if (!report) {
     notFound();
   }
 
-  const applications = (applicationsRes.data || []).map((app) => ({
-    id: app.id,
-    company_name: app.company_name,
-    role_title: app.role_title,
-  }));
+  const { applications, error: applicationsError } = applicationsResult;
 
   return (
     <div className="space-y-6">
@@ -64,6 +56,13 @@ export default async function ResumeAnalysisDetailPage({ params }: PageProps) {
           Analyzed on {new Date(report.analyzedAt).toLocaleDateString()} against resume {report.resumeVersion}
         </p>
       </div>
+
+      {applicationsError && (
+        <div className="rounded-lg border border-amber-800/80 bg-amber-950/30 p-3.5 text-xs text-amber-200 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
+          <span>{applicationsError}</span>
+        </div>
+      )}
 
       <AiAnalysisReport report={report} applications={applications} />
     </div>

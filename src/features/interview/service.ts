@@ -135,6 +135,96 @@ export async function seedQuestionBankIfEmpty(
   return { inserted: insertedCount, skipped: seedQuestions.length - insertedCount };
 }
 
+function slugifySkillToken(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/\+/g, "p")
+    .replace(/\band\b/g, " ")
+    .replace(/&/g, " ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function expandSlugVariants(slug: string): string[] {
+  const hyphen = slug.replace(/_/g, "-");
+  const underscore = slug.replace(/-/g, "_");
+  return hyphen === underscore ? [hyphen] : [hyphen, underscore];
+}
+
+/**
+ * Resolves an incoming skill filter (slug, display name, space/underscore/hyphen variant,
+ * or category alias such as "System Design") to exact stored `skill_slug` values.
+ * Unknown skills normalize strictly to slug variants without weakening filtering.
+ */
+export function resolveSkillFilterSlugs(rawSkill: string): string[] {
+  const trimmed = rawSkill.trim();
+  if (!trimmed) return [];
+
+  const lower = trimmed.toLowerCase();
+  const simpleHyphen = lower
+    .replace(/[\s_]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+  const normalizedToken = slugifySkillToken(trimmed);
+
+  // 1. Match against INTERVIEW_TAXONOMY skills
+  for (const cat of INTERVIEW_TAXONOMY) {
+    for (const skill of cat.skills) {
+      const skillSlugLower = skill.slug.toLowerCase();
+      const skillNameLower = skill.name.toLowerCase();
+      if (
+        skillSlugLower === lower ||
+        skillSlugLower === simpleHyphen ||
+        skillSlugLower === normalizedToken ||
+        skillNameLower === lower ||
+        slugifySkillToken(skill.name) === normalizedToken
+      ) {
+        return expandSlugVariants(skill.slug);
+      }
+    }
+  }
+
+  // 2. Match against curated question-bank seed skill_name / skill_slug pairs
+  for (const q of questionBankSeed.questions) {
+    const qSlugLower = q.skill_slug.toLowerCase();
+    const qNameLower = q.skill_name.toLowerCase();
+    if (
+      qSlugLower === lower ||
+      qSlugLower === simpleHyphen ||
+      qSlugLower === normalizedToken ||
+      qNameLower === lower ||
+      slugifySkillToken(q.skill_name) === normalizedToken
+    ) {
+      return expandSlugVariants(q.skill_slug);
+    }
+  }
+
+  // 3. Match taxonomy category aliases (e.g. "System Design" -> ["lld", "hld"])
+  for (const cat of INTERVIEW_TAXONOMY) {
+    const catIdLower = cat.id.toLowerCase();
+    const catNameLower = cat.name.toLowerCase();
+    if (
+      catIdLower === lower ||
+      catIdLower === simpleHyphen ||
+      catIdLower === normalizedToken ||
+      catNameLower === lower ||
+      slugifySkillToken(cat.name) === normalizedToken
+    ) {
+      const slugs = new Set<string>();
+      for (const s of cat.skills) {
+        for (const variant of expandSlugVariants(s.slug)) {
+          slugs.add(variant);
+        }
+      }
+      return Array.from(slugs);
+    }
+  }
+
+  // 4. Unknown / custom skill: normalize spaces and underscores strictly to slug variants
+  return expandSlugVariants(simpleHyphen || lower);
+}
+
 export async function getQuestions(
   supabase: SupabaseClient,
   userId: string,
@@ -157,14 +247,12 @@ export async function getQuestions(
     }
   }
 
-  if (filter?.skill) {
-    const sk = filter.skill.toLowerCase();
-    const skHyphen = sk.replace(/_/g, "-");
-    const skUnderscore = sk.replace(/-/g, "_");
-    if (skHyphen === skUnderscore) {
-      query = query.eq("skill_slug", sk);
-    } else {
-      query = query.in("skill_slug", [skHyphen, skUnderscore]);
+  if (filter?.skill?.trim()) {
+    const resolvedSlugs = resolveSkillFilterSlugs(filter.skill);
+    if (resolvedSlugs.length === 1) {
+      query = query.eq("skill_slug", resolvedSlugs[0]!);
+    } else if (resolvedSlugs.length > 1) {
+      query = query.in("skill_slug", resolvedSlugs);
     }
   }
 

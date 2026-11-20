@@ -1,4 +1,6 @@
-import { geminiService } from "@/features/ai";
+import "server-only";
+
+import { geminiService, AiServiceError } from "@/features/ai";
 import {
   evaluationFeedbackSchema,
   type EvaluationFeedback,
@@ -89,38 +91,14 @@ ${userAnswer.trim()}
 
 Evaluate the candidate's answer above now and return the specified JSON object.`;
 
-  let aiResult;
-  try {
-    aiResult = await geminiService.generateContent({
-      prompt: promptContent,
-      systemInstruction: EVALUATION_SYSTEM_INSTRUCTION,
-      temperature: 0.2, // Low temperature for consistent, objective evaluation
-      maxOutputTokens: 4096,
-      timeoutMs: 30_000,
-    });
-  } catch (err: unknown) {
-    const isRetryable =
-      err instanceof Error &&
-      (err.message.includes("quota") ||
-        err.message.includes("rate limit") ||
-        err.message.includes("Failed to communicate with AI provider") ||
-        (err as { code?: string })?.code === "PROVIDER_ERROR" ||
-        (err as { code?: string })?.code === "QUOTA_EXCEEDED");
-
-    if (isRetryable) {
-      // Handle transient rate limit burst or network glitch with a 3.5s backoff
-      await new Promise((r) => setTimeout(r, 3500));
-      aiResult = await geminiService.generateContent({
-        prompt: promptContent,
-        systemInstruction: EVALUATION_SYSTEM_INSTRUCTION,
-        temperature: 0.2,
-        maxOutputTokens: 4096,
-        timeoutMs: 30_000,
-      });
-    } else {
-      throw err;
-    }
-  }
+  // Call geminiService directly (geminiService already handles bounded transient retries internally)
+  const aiResult = await geminiService.generateContent({
+    prompt: promptContent,
+    systemInstruction: EVALUATION_SYSTEM_INSTRUCTION,
+    temperature: 0.2, // Low temperature for consistent, objective evaluation
+    maxOutputTokens: 4096,
+    timeoutMs: 30_000,
+  });
 
   const rawJson = extractJsonFromText(aiResult.text);
 
@@ -140,37 +118,12 @@ Evaluate the candidate's answer above now and return the specified JSON object.`
 
   const validated = evaluationFeedbackSchema.safeParse(parsedObject);
   if (!validated.success) {
-    // Attempt graceful normalization if minor typing issues occurred
-    const fallbackScore = typeof (parsedObject as Record<string, unknown>)?.score === "number"
-      ? Math.max(0, Math.min(10, (parsedObject as Record<string, unknown>).score as number))
-      : 5;
-
-    return {
-      score: fallbackScore,
-      technicalCorrectness: 3,
-      completeness: 3,
-      clarity: 3,
-      practicalDepth: 3,
-      tradeoffAwareness: 3,
-      correctConcepts: Array.isArray((parsedObject as Record<string, unknown>)?.correctConcepts)
-        ? ((parsedObject as Record<string, unknown>).correctConcepts as string[])
-        : ["Attempt submitted"],
-      missingConcepts: Array.isArray((parsedObject as Record<string, unknown>)?.missingConcepts)
-        ? ((parsedObject as Record<string, unknown>).missingConcepts as string[])
-        : [],
-      incorrectStatements: Array.isArray((parsedObject as Record<string, unknown>)?.incorrectStatements)
-        ? ((parsedObject as Record<string, unknown>).incorrectStatements as string[])
-        : [],
-      clarityAssessment: String((parsedObject as Record<string, unknown>)?.clarityAssessment || "Evaluation completed."),
-      depthAssessment: String((parsedObject as Record<string, unknown>)?.depthAssessment || "Evaluation completed."),
-      improvementAdvice: String((parsedObject as Record<string, unknown>)?.improvementAdvice || "Review core concepts and practice with concrete examples."),
-      idealAnswer: String((parsedObject as Record<string, unknown>)?.idealAnswer || sampleAnswer || "Review recommended points."),
-      followUpQuestions:
-        Array.isArray((parsedObject as Record<string, unknown>)?.followUpQuestions) &&
-          ((parsedObject as Record<string, unknown>).followUpQuestions as string[]).length > 0
-          ? ((parsedObject as Record<string, unknown>).followUpQuestions as string[])
-          : ["How would you optimize and test this architecture under peak load?"],
-    };
+    throw new AiServiceError(
+      `AI evaluation response was malformed or failed schema validation: ${validated.error.issues.map((i) => i.message).join(", ")}`,
+      "PROVIDER_ERROR",
+      502,
+      validated.error.issues
+    );
   }
 
   return validated.data;

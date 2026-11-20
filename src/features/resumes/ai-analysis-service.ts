@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { SupabaseClient } from "@supabase/supabase-js";
 import {
   type RunAiAnalysisInput,
@@ -6,6 +7,7 @@ import {
 } from "./ai-analyzer-schema";
 import { generateAiResumeJdAnalysis } from "./ai-analyzer";
 import { getAllSkills } from "@/features/interview/taxonomy";
+import { aiRateLimiter, AiServiceError } from "@/features/ai";
 
 export class ResumeJdAnalysisService {
   constructor(private supabase: SupabaseClient) {}
@@ -68,7 +70,17 @@ export class ResumeJdAnalysisService {
       throw new Error("Job description text must contain at least 10 characters.");
     }
 
-    // 3. Query existing 376-question bank for skills identified in JD
+    // 3. Rate limit check (M-01)
+    const rateLimit = aiRateLimiter.check(userId);
+    if (!rateLimit.allowed) {
+      throw new AiServiceError(
+        `Rate limit exceeded. Please wait ${rateLimit.retryAfterSeconds} seconds before retrying.`,
+        "RATE_LIMITED",
+        429
+      );
+    }
+
+    // 4. Query existing 376-question bank for skills identified in JD
     const allTaxonomySkills = getAllSkills();
     const lowerJd = jdText.toLowerCase();
     const matchedSkills = allTaxonomySkills
@@ -87,7 +99,7 @@ export class ResumeJdAnalysisService {
 
     const { data: bankQuestions } = await bankQuery.limit(6);
 
-    // 4. Run AI Analysis via Gemini
+    // 5. Run AI Analysis via Gemini
     const report = await generateAiResumeJdAnalysis({
       resumeText: resume.extracted_text,
       resumeVersion: resume.version_label || "v1",
@@ -102,7 +114,7 @@ export class ResumeJdAnalysisService {
     report.jobDescriptionId = effectiveJdId;
     report.applicationId = effectiveAppId;
 
-    // 5. Persist analysis into resume_jd_analyses table
+    // 6. Persist analysis into resume_jd_analyses table
     const insertPayload: Record<string, unknown> = {
       user_id: userId,
       resume_id: resume.id,
@@ -120,12 +132,11 @@ export class ResumeJdAnalysisService {
       .select("id, created_at")
       .single();
 
-    if (insertErr) {
-      // If table unmigrated or error occurs, log and attach fallback ID
-      report.id = `mem-${crypto.randomUUID()}`;
-    } else if (inserted) {
-      report.id = inserted.id;
+    if (insertErr || !inserted) {
+      throw new Error(`Failed to persist resume analysis report: ${insertErr?.message || "Unknown database error"}`);
     }
+
+    report.id = inserted.id;
 
     return report;
   }
@@ -234,6 +245,27 @@ export class ResumeJdAnalysisService {
     userId: string,
     question: TargetedInterviewQuestion
   ): Promise<string> {
+    const normalizedPrompt = question.questionText.trim();
+    // Deterministic external ID for the question based on normalized prompt and skill
+    const promptHash = crypto
+      .createHash("sha256")
+      .update(normalizedPrompt.toLowerCase())
+      .digest("hex")
+      .slice(0, 32);
+    const sourceExternalId = `ai-gen-${promptHash}`;
+
+    // Fast path: Check for existing question for this user to avoid duplicates (M-06)
+    const { data: existingQuestion } = await this.supabase
+      .from("interview_question_bank")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("question_prompt", normalizedPrompt)
+      .maybeSingle();
+
+    if (existingQuestion) {
+      return existingQuestion.id;
+    }
+
     const diffMap: Record<string, string> = {
       easy: "basic",
       beginner: "basic",
@@ -269,6 +301,7 @@ export class ResumeJdAnalysisService {
       follow_up_questions: question.followUpQuestions || [],
       origin: "ai_generated",
       source_name: "AI Generated (JD Alignment)",
+      source_external_id: sourceExternalId,
       is_active: true,
     };
 
@@ -278,8 +311,48 @@ export class ResumeJdAnalysisService {
       .select("id")
       .single();
 
-    if (error || !data) {
-      throw new Error(`Failed to save question to bank: ${error?.message || "Unknown error"}`);
+    if (error) {
+      // Concurrency conflict handling (M-06):
+      // If another concurrent request inserted the identical question between the check and insert,
+      // Postgres rejects with code 23505 (unique_violation).
+      // Catch the conflict and return the existing record's ID without error.
+      const isConflict =
+        error.code === "23505" ||
+        error.message?.includes("duplicate") ||
+        error.message?.includes("unique") ||
+        error.message?.includes("interview_question_bank");
+
+      if (isConflict) {
+        // Query by normalized question prompt
+        const { data: conflictRecord } = await this.supabase
+          .from("interview_question_bank")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("question_prompt", normalizedPrompt)
+          .maybeSingle();
+
+        if (conflictRecord) {
+          return conflictRecord.id;
+        }
+
+        // Query by deterministic source_external_id
+        const { data: extRecord } = await this.supabase
+          .from("interview_question_bank")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("source_external_id", sourceExternalId)
+          .maybeSingle();
+
+        if (extRecord) {
+          return extRecord.id;
+        }
+      }
+
+      throw new Error(`Failed to save question to bank: ${error.message || "Unknown error"}`);
+    }
+
+    if (!data) {
+      throw new Error("Failed to save question to bank: No record returned.");
     }
 
     return data.id;

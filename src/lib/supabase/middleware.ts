@@ -2,14 +2,23 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { env } from "@/lib/env";
 
+const PROTECTED_ROUTE_PREFIXES = [
+  "/dashboard",
+  "/dsa",
+  "/learning",
+  "/planner",
+  "/interview-questions",
+  "/projects",
+  "/applications",
+  "/resume",
+  "/interview",
+  "/onboarding",
+  "/settings",
+] as const;
+
 export function isProtectedAppRoute(pathname: string): boolean {
-  return (
-    pathname.startsWith("/dashboard") ||
-    pathname.startsWith("/dsa") ||
-    pathname.startsWith("/learning") ||
-    pathname.startsWith("/planner") ||
-    pathname.startsWith("/interview-questions") ||
-    pathname.startsWith("/settings")
+  return PROTECTED_ROUTE_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
   );
 }
 

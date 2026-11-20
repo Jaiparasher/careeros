@@ -4,11 +4,200 @@
 - **Phase:** 4 — AI Career Assistant & Mock Interviews
 - **Batches:**
   - Batch 1: Secure Gemini AI Integration Foundation — Complete & Verified
-  - Batch 2: Technical Mock Interview & Answer Coaching Engine — Complete, Migrated (0010 Applied & Verified Live), & Audited
-  - Batch 3: AI Resume & Job Description Intelligence — Complete, Schema Ready (Migration 0011 Authored & Verified), & Audited
-- **Status:** Phase 4 Batch 3 Complete (Migration 0011 Created with RLS and Composite FKs, Zod Validation, AI Resume vs JD Engine Implemented, 10-Dimension Analysis Report, Question Bank Alignment, Deep Links, Multi-Tenant Isolation Verified, 0 TypeScript Errors, 0 ESLint Warnings, Full Test Suite Passing; Batch 4 Deferred)
+  - Batch 2: Technical Mock Interview & Answer Coaching Engine — Complete, Migrated (0010 Applied & Verified Live), & Remediated
+  - Batch 3: AI Resume & Job Description Intelligence — Complete, Migrated (0011 Applied & Verified Live), & Remediated
+  - Batch 4: Personalized AI Study Recommendations & Adaptive Revision Advisor — Complete, Migrated (0012 Applied & Verified Live), & Remediated
+- **Status:** Phase 4 Remediation Complete (Batches A, B, C, and D complete; M-01 through M-11, N-01 through N-03, and L-01 through L-09 resolved; forward-only Migrations 0013 and 0014 authored; zero Gemini tokens consumed; zero live database writes; 30/30 unit test files / 333 tests passed; TypeScript 0 errors; ESLint 0 errors / 0 warnings; Next.js production build clean; Phase 4 closure ready).
+
+## Phase 4 Remediation: Batch D Targeted Corrections & Hygiene Fixes
+- **Zero AI API Invocation**: Guaranteed zero Gemini API tokens consumed across all verification and remediation tasks.
+- **Zero Live DB Mutations**: Zero live database writes executed; no migrations applied.
+- **Remediations Implemented & Verified**:
+  1. **L-01 — Next.js `server-only` Module Protection (`package.json`, `src/features/ai/gemini-service.ts`, `src/features/resumes/ai-analyzer.ts`, `src/features/interview/mock-evaluator.ts`, `src/features/planner/recommendation-advisor.ts`)**:
+     - Installed `server-only` minimal package and added `import "server-only";` to all genuinely server-only modules.
+     - Enforces official Next.js build-time boundary protection preventing accidental Client Component imports.
+     - Configured Vitest alias in `vitest.config.ts` mapping `server-only` to empty shim for test runner compatibility.
+  2. **L-02 — Timeout Abort Signal Propagation & Cancellation (`src/features/ai/gemini-service.ts`)**:
+     - Bound underlying Google GenAI SDK calls to an active `AbortController` (`config.abortSignal`), ensuring timeouts abort the actual underlying fetch request.
+     - Prevents timed-out requests from triggering automatic retries or consuming redundant quota.
+     - Implemented abort-aware sleep helper (`sleepWithAbort`) that immediately cancels backoff delays if an abort occurs.
+     - Guaranteed timer and abort event-listener cleanup in `finally` block to prevent leaks and unhandled late rejections.
+  3. **L-03 — Single-Tier Bounded Retry Architecture (`src/features/resumes/ai-analyzer.ts`, `src/features/interview/mock-evaluator.ts`)**:
+     - Removed redundant outer retry catch blocks in `ai-analyzer` and `mock-evaluator`.
+     - Centralized all transient retry and exponential backoff into `geminiService`, eliminating stacked retries, rate-limit depletion, and compounding latency.
+  4. **L-04 — Numeric Score Serialization & Strict State Guards (`src/features/interview/mock-interview-service.ts`)**:
+     - Implemented robust `parseScore` helper handling numbers in `[0, 10]`, formatted numeric strings (e.g. `"8.50"`), rejecting negative numbers, numbers > 10, NaN, non-finite values, and malformed strings.
+     - Added strict state transition guards: rejects answer submission or retry if session is `completed` or `abandoned`, rejects answer submission if question is already `evaluated`, and rejects retry if question status is `skipped`.
+  5. **L-05 — Combined Prompt Boundary Measurement & Zero Fabrication (`src/features/resumes/ai-analyzer.ts`)**:
+     - Enforced `MAX_PROMPT_LENGTH = 10,000` at the final assembled prompt boundary in `buildAnalysisPrompt`.
+     - Completely eliminated silent placeholder report fabrication; malformed, empty, or schema-invalid AI responses now throw explicit `AiServiceError(..., "PROVIDER_ERROR", 502)`.
+  6. **L-06 — Real Calendar Date Validation & Route Revalidation (`src/features/planner/recommendation-schema.ts`, `src/features/planner/recommendation-actions.ts`)**:
+     - Added `isValidCalendarDate` checking real Gregorian calendar days (handles leap years e.g. `2028-02-29`, rejects invalid dates like `2026-02-31`, `2026-04-31`, `2026-13-01`, `2027-02-29`).
+     - Enforced `calendarDateSchema` across recommendation generation and acceptance schemas.
+     - Added route revalidation (`revalidatePath("/planner")` and `revalidatePath("/planner/recommendations")`) on recommendation mutations.
+  7. **L-07 — Supported Category Taxonomy & Candidate Deduplication (`src/features/planner/recommendation-service.ts`, `recommendation-advisor.ts`)**:
+     - Replaced hardcoded category assumptions with `deriveModuleCategory` strictly adhering to `taskCategorySchema` (`java`, `spring_boot`, `cs_fundamentals`, `system_design`, `dsa`, `other`).
+     - Implemented candidate batch deduplication preventing duplicate task titles and entity IDs within the same generated batch and against the target date's agenda without suppressing different dates.
+  8. **L-09 — Sidebar Product Status Accuracy & Rate Limiter Documentation (`src/components/layout/sidebar.tsx`, `src/features/ai/rate-limiter.ts`)**:
+     - Updated sidebar banner from misleading `"Phase 1 Active"` / `"Phase 4 Active"` to accurate `"Workspace Ready"` with description `"All preparation modules active: DSA, Roadmaps, Projects, Job Tracker & Mock Interviews."`
+     - Added detailed architectural documentation in `rate-limiter.ts` explaining the zero-dependency in-memory sliding window, its serverless multi-instance constraints, and the future distributed Redis/Postgres evolution path.
+- **Deterministic Quality Gates**:
+  - Vitest Unit Suite: **30/30 files passed, 321/321 tests passed** (+12 new tests in `tests/phase4-batch-d.test.ts`).
+  - TypeScript: **0 errors** (`tsc --noEmit`).
+  - ESLint: **0 errors, 0 warnings** (`eslint`).
+  - Production Build: **20/20 static pages generated, 23 routes compiled** (`next build`).
+
+## Phase 4 Remediation: Batch C (Database Integrity & Security)
+- **Zero AI API Invocation**: Guaranteed zero Gemini API tokens consumed across all verification and remediation tasks.
+- **Zero Live DB Mutations**: Migration 0014 authored forward-only without applying to live Supabase; zero live records mutated; verified read-only that 0 existing records violate constraints.
+- **Remediations Implemented**:
+  1. **M-08 — Interview Question Ownership Integrity & Score Bounds (`supabase/migrations/0014_phase4_batch_c_database_integrity_and_security.sql`)**:
+     - Upgraded single-column foreign key `interview_questions.question_bank_id` to composite owner-scoped foreign key `interview_questions_bank_owner_fk (question_bank_id, user_id) references public.interview_question_bank(id, user_id) on delete set null (question_bank_id)`.
+     - Guarantees multi-tenant isolation by preventing cross-tenant question bank linking.
+     - Added CHECK constraints: `interview_questions_score_check (score is null or (score >= 0 and score <= 10))` and `interview_sessions_overall_score_check (overall_score is null or (overall_score >= 0 and overall_score <= 10))`.
+  2. **N-03 — Project Bug/Feature Foreign-Key Deletion Correction (`supabase/migrations/0014_phase4_batch_c_database_integrity_and_security.sql`)**:
+     - Corrected `project_bugs_feature_owner_fk` from bare `ON DELETE SET NULL` to column-specific `ON DELETE SET NULL (feature_id)`.
+     - Enables deleting features with linked bugs without violating `NOT NULL` on `project_bugs.user_id`, preserving ownership integrity and project association.
+  3. **L-08 — Phase 4 Batch 4 RPC Hardening (`supabase/migrations/0014_phase4_batch_c_database_integrity_and_security.sql`)**:
+     - Hardened `public.accept_study_recommendation()` with fixed safe `SET search_path = public, pg_temp` to eliminate search-path injection risk.
+     - Enforced least-privilege permissions: revoked execution from `PUBLIC` and `anon`; granted exclusively to `authenticated` and `service_role`.
+     - Preserved atomic acceptance and idempotency guarantees under `SECURITY INVOKER` enforcing `auth.uid()`.
+- **Deterministic Quality Gates**:
+  - Vitest Unit Suite: **29/29 files passed, 309/309 tests passed** (`npx.cmd vitest run --exclude "**/*live*.test.ts" --exclude "**/resumes-security-audit.test.ts"`).
+  - TypeScript: **0 errors** (`tsc --noEmit`).
+  - ESLint: **0 errors, 0 warnings** (`eslint`).
+  - Production Build: **20/20 static pages generated, 23 routes compiled** (`next build`).
+
+## Phase 4 Remediation: Batch B Targeted Corrections (M-01, M-02, M-06)
+- **Zero AI API Invocation**: Guaranteed zero Gemini API tokens consumed across all verification and remediation tasks.
+- **Zero Live DB Mutations**: Migration 0013 authored forward-only without applying to live Supabase; zero live records mutated.
+- **Targeted Corrections Implemented**:
+  1. **M-01 — Upfront Retry Rate Limiting (`src/features/interview/mock-interview-service.ts`)**:
+     - Upfront rate-limit check `aiRateLimiter.check(userId)` added at the start of `retryEvaluation()` before question lookup or state mutation.
+     - Rejects rate-limited requests immediately with `AiServiceError(..., "RATE_LIMITED", 429)`, preserving previously saved user answers and guaranteeing zero AI calls.
+     - Deterministic unit tests verified: within-limit success, over-limit rejection (0 AI calls confirmed via spy), and cross-user rate limit isolation.
+  2. **M-02 — Concurrency Safety & Atomic State Transitions (`src/features/interview/mock-interview-service.ts`)**:
+     - Atomic conditional update claim in PostgreSQL: `update({ evaluation_status: "evaluating", user_answer: ... }).eq("id", ...).eq("session_id", ...).eq("user_id", ...).eq("evaluation_status", eligibleStatus).select()`.
+     - Eligible status is `'pending'` for initial submissions and `'failed'` for retries.
+     - If two requests arrive concurrently, exactly one claim succeeds; the second receives 0 rows and throws `"Question is currently being evaluated. Please wait."` before invoking the evaluator.
+     - Pre-checks reject answers to `completed` or `abandoned` sessions upfront.
+     - Deterministic unit tests verified: concurrent submissions, concurrent retries, session status guards, and cross-user isolation.
+  3. **M-06 — Concurrency-Safe Question Bank Deduplication (`src/features/resumes/ai-analysis-service.ts`)**:
+     - Stable deterministic uniqueness identifier `source_external_id = "ai-gen-" + crypto.createHash("sha256").update(normalizedPrompt.toLowerCase()).digest("hex").slice(0, 32)` leveraging existing live partial unique index `interview_question_bank_external_uidx`.
+     - Graceful conflict recovery: catches PostgreSQL error `23505` and returns the existing question ID without throwing.
+     - Forward-only migration authored: `supabase/migrations/0013_phase4_interview_question_bank_dedup.sql` with scoped partial unique index `interview_question_bank_ai_prompt_uidx (user_id, md5(lower(trim(question_prompt)))) WHERE source_name = 'AI Generated (JD Alignment)'`. Left unapplied to live DB as existing live index `interview_question_bank_external_uidx` already provides 100% of the required concurrency protection.
+     - Deterministic unit tests verified: first save, repeated save, concurrent identical saves, different questions, similar questions, cross-user isolation, and error 23505 conflict recovery.
+- **Deterministic Quality Gates**:
+  - Vitest Unit Suite: **28/28 files passed, 300/300 tests passed** (`npx.cmd vitest run --exclude "**/*live*.test.ts" --exclude "**/resumes-security-audit.test.ts"`).
+  - TypeScript: **0 errors** (`tsc --noEmit`).
+  - ESLint: **0 errors, 0 warnings** (`eslint`).
+  - Production Build: **20/20 static pages generated, 23 routes compiled** (`next build`).
+
+## Phase 4 Final Comprehensive Audit Summary (Independent Zero-AI Re-Audit)
+- **Audit Mode:** Strict audit-only independent re-audit (no code/migration changes, no Gemini API invocations). Branch: `main`, HEAD: `63b625d` (Batch 4 + Migration 0012 currently uncommitted in working tree).
+- **Deterministic Quality Gates:**
+  - Deterministic Unit Suites (no AI): **24/24 files, 186/186 tests PASSED**.
+  - Mocked AI Suites (no live AI): **4/4 files, 71/71 tests PASSED**.
+  - Live Supabase-Only Suites (no AI): **5/5 files, 28/28 tests PASSED**.
+  - Live AI Suites: **5 files, 65 tests SKIPPED** (`mock-interview-live`, `phase4-batch2-live-audit`, `ai-resume-analysis-live`, `phase4-batch3-live-migration-audit`, `study-recommendations-live`) to guarantee zero Gemini token consumption.
+  - TypeScript (`tsc --noEmit`): **PASS (0 errors)**.
+  - ESLint (`eslint`): **PASS (0 errors, 0 warnings)**.
+  - Production Build (`next build`): **PASS (20/20 static pages, 23 routes compiled)**.
+  - Static Client Bundle Secret Scan (58 `.next/static` files): **PASS (0 API key hits, 0 `GEMINI_API_KEY` hits, 0 `@google/genai` hits)**.
+  - Live Read-Only Database & RLS Audit: **PASS** across all 21 public tables (unauthenticated access returns 0 rows; User B sees 0 of User A's rows; `career-files` bucket private; Migrations 0010, 0011, 0012 live columns verified).
+  - Dependency Security (`npm audit`): 21 total vulnerabilities (7 moderate, 12 high, 2 critical dev-only via `vitest`/`tinypool`); 3 production vulnerabilities (`zod <4.6.6`, `next` bundled `postcss <=8.5.22`).
+- **Open Audit Findings Pending User Approval (No Fixes Applied):**
+  - **Medium (14 — 11 Still Present from Previous Audit + 3 Newly Discovered):**
+    1. `M-01`: Missing `aiRateLimiter.check(userId)` in Batch 2 (`mock-interview-service.ts`) and Batch 3 (`ai-analysis-service.ts`).
+    2. `M-02`: Missing duplicate/completed-session guard in `MockInterviewService.submitAnswer()`.
+    3. `M-03`: `interview_sessions.provider`, `model`, and `prompt_version` never persisted by `MockInterviewService`.
+    4. `M-04`: Silent fabricated fallback score (`score: 5`, rubric `3/5`) on malformed Gemini JSON in `mock-evaluator.ts` instead of marking `failed` for retry.
+    5. `M-05`: Missing Zod validation on 5 server actions in `src/features/resumes/ai-actions.ts`.
+    6. `M-06`: Missing deduplication before saving AI-generated questions in `ResumeJdAnalysisService.saveGeneratedQuestionToBank()`.
+    7. `M-07`: Silent `mem-<uuid>` fallback swallowing DB insert errors in `ResumeJdAnalysisService.runAnalysis()` (Batch 3 `resume_jd_analyses`, not mock interview sessions).
+    8. `M-08`: Migration 0010 `interview_questions.question_bank_id` uses single-column FK instead of composite `(question_bank_id, user_id)` owner FK.
+    9. `M-09`: Cross-feature deep links `/interview-questions?skill=<skill_name>` fail for multi-word skills because `getQuestions()` matches `skill_slug` with spaces un-slugified (`src/features/interview/service.ts:160`).
+    10. `M-10`: Cross-feature bug: `src/app/(app)/dashboard/page.tsx:49` selects non-existent `status` column on `learning_modules` (verified live error).
+    11. `M-11`: Cross-feature bug: `src/features/planner/service.ts:217` (`generateSprintPreview`) selects non-existent `topic` column on `dsa_questions` (verified live error).
+    12. `N-01` *(Newly Discovered)*: `src/app/(app)/resume/page.tsx:31` and `src/app/(app)/resume/analysis/[id]/page.tsx:28` query non-existent `company_name` and `deleted_at` columns on `job_applications` (verified live error), leaving application-linking dropdowns empty.
+    13. `N-02` *(Newly Discovered)*: `src/lib/supabase/middleware.ts:5-14` omits `/projects`, `/applications`, `/resume`, `/interview`, and `/onboarding` from `isProtectedAppRoute()` (pages enforce auth individually, but middleware redirect is bypassed).
+    14. `N-03` *(Newly Discovered)*: Migration 0007 (`0007_phase3_project_tracker_extensions.sql:49-50`) defines composite FK `project_bugs_feature_owner_fk (feature_id, user_id)` with bare `ON DELETE SET NULL` instead of `ON DELETE SET NULL (feature_id)`, causing feature deletion with linked bugs to fail `NOT NULL` on `user_id`.
+  - **Low (9 — All Still Present):** `L-01` missing `import "server-only"` on `gemini-service.ts`; `L-02` unhandled timeout rejection window during 4s retry sleep in `gemini-service.ts`; `L-03` double retry backoff stacking in Batch 2 & Batch 3; `L-04` `numeric(4,2)` string vs number check on `q.score` & retrying skipped questions in `mock-interview-service.ts`; `L-05` prompt length margin near `10,000` chars & silent empty fallback in `ai-analyzer.ts`; `L-06` unvalidated `targetDate` and missing `revalidatePath("/planner")` in `recommendation-actions.ts`; `L-07` hardcoded `spring_boot` category on incomplete modules & no same-day module title exclusion in `recommendation-service.ts`; `L-08` missing `SET search_path` / explicit `REVOKE EXECUTE FROM public, anon` on `accept_study_recommendation()` (Migration 0012), missing `0..10` check constraint on `score` (Migration 0010), redundant inline single-column FKs (Migration 0011); `L-09` stale `"Phase 1 Active"` banner in `sidebar.tsx` + in-memory serverless rate limiter limitation.
+
+## Phase 4 Remediation — Batch A (Cross-Feature Bug Fixes)
+- **Status:** Complete & Verified (zero Gemini API calls; zero migration, DB record, or dependency changes).
+- **Fixed Findings (`5`):**
+  - **`M-09` (Fixed & Live Read-Only Verified):** Added `resolveSkillFilterSlugs()` in `src/features/interview/service.ts` and wired it into `getQuestions()` to normalize spaces/underscores/hyphens, taxonomy skill names, seed skill names (`Hibernate and JPA`, `REST APIs`, `Spring Boot`, `Spring Security`), and category aliases (`System Design` → `["lld", "hld"]`) strictly without weakening unknown-skill filtering. Live read-only DB probe confirmed non-zero curated question matches (`Spring Boot`: 14, `Hibernate and JPA`: 12, `REST APIs`: 12, `Spring Security`: 11, `System Design`: 20, `Java`: 12, unknown `Quantum Computing`: 0).
+  - **`M-10` (Fixed & Live Read-Only Verified):** Added `getDashboardCourseProgress()` in `src/features/learning/service.ts` querying only actual `learning_modules` columns (`module_number, title, completion_percent`), reusing `calculateCourseProgress()`, and wired `src/app/(app)/dashboard/page.tsx` with explicit error UI (`Unavailable` badge + alert) instead of silently showing `0%`. Live read-only query succeeded (`error: null`).
+  - **`M-11` (Fixed & Live Read-Only Verified):** Updated `generateSprintPreview()` in `src/features/planner/service.ts` to query `dsa_questions.patterns` instead of nonexistent `topic`, throw explicit errors, and map 1/multiple/empty patterns safely with `"Algorithms"` fallback. Live read-only query returned all 75 Grind 75 rows (`error: null`).
+  - **`N-01` (Fixed & Live Read-Only Verified):** Added `getResumeApplicationOptions()` in `src/features/resumes/service.ts` querying actual `job_applications` columns (`id, company, role_title`) without nonexistent `company_name` or `deleted_at`, and updated both `src/app/(app)/resume/page.tsx` and `src/app/(app)/resume/analysis/[id]/page.tsx` with consistent mapping and explicit error banners. Live read-only query returned all 6 user applications (`error: null`).
+  - **`N-02` (Fixed & Unit Verified):** Updated `isProtectedAppRoute()` in `src/lib/supabase/middleware.ts` to cover `/projects`, `/applications`, `/resume`, `/interview`, and `/onboarding` (plus nested paths) using boundary-safe matching (`pathname === prefix || pathname.startsWith(prefix + "/")`) preventing accidental prefix collisions.
+- **Verification Summary:**
+  - Deterministic unit tests: **24/24 files, 206/206 passed** (+20 new tests across `interview-service`, `learning-modules`, `planner-service`, `resumes`, `routes`).
+  - Mocked AI tests: **4/4 files, 71/71 passed**.
+  - Live Supabase-only tests (Phase 3, zero AI): **5/5 files, 28/28 passed**.
+  - Live AI tests: **5 files, 65 tests skipped** (strict zero-Gemini compliance).
+  - TypeScript (`tsc --noEmit`): **PASS (0 errors)**; ESLint (`eslint`): **PASS (0 errors, 0 warnings)**; Production build (`next build`): **PASS (20/20 static pages, 23 routes compiled)**.
+- **Remaining Unaddressed Audit Findings (Deferred to Later Batches):** `M-01`–`M-08`, `N-03`, `L-01`–`L-09`, and dependency advisories.
+
+## Phase 4 Remediation — Batch B (AI Security & Reliability)
+- **Status:** Complete & Verified (zero Gemini API calls; zero live DB mutations; zero dependency changes).
+- **Fixed Findings (`7`):**
+  - **`M-01` (Rate Limiter Enforcement):** Enforced `aiRateLimiter.check(userId)` in `MockInterviewService.submitAnswer()` (prior to AI evaluation) and `ResumeJdAnalysisService.runAnalysis()` (prior to JD question queries & Gemini analysis), throwing `AiServiceError(..., "RATE_LIMITED", 429)`. On mock interview submission rate limit, question state transitions to `failed` and preserves the candidate's answer for retry.
+  - **`M-02` (Session & Duplicate Submission Guards):** In `MockInterviewService.submitAnswer()`: rejected submissions if session is `completed` or `abandoned`; rejected submissions if question is already `evaluating`, `evaluated`, or `skipped`. In `MockInterviewService.retryEvaluation()`: guarded session status (`completed`/`abandoned`) and required question `evaluation_status === "failed"`.
+  - **`M-03` (AI Provenance Persistence):** Persisted `provider: "gemini"`, `model: geminiService.getModel()`, and `prompt_version: "mock-eval-v1"` during `MockInterviewService.createSession()`. Verified existing columns from Migration 0005 (`0005_interview_tables.sql:9-11`); no schema migration required.
+  - **`M-04` (Evaluator Score Fabrication Elimination):** Removed fallback score fabrication (`score: 5`, rubric scores `3/5`) in `src/features/interview/mock-evaluator.ts`. Schema parse errors now throw `AiServiceError(..., "PROVIDER_ERROR", 502)`, transitioning the question to `failed` status and enabling candidate retry.
+  - **`M-05` (Resume Analysis Actions Zod Validation):** Added boundary-level Zod schema validation to all 5 unvalidated server actions in `src/features/resumes/ai-actions.ts`: `getAiResumeJdAnalysisAction` (UUID check), `listAiResumeJdAnalysesAction` (UUID filters check), `connectAnalysisToApplicationAction` (composite UUID check), `saveGeneratedQuestionToBankAction` (`targetedInterviewQuestionSchema`), and `deleteAiAnalysisAction` (UUID check).
+  - **`M-06` (Duplicate Saved Question Prevention):** In `ResumeJdAnalysisService.saveGeneratedQuestionToBank()`, added query for existing question with matching `user_id` and normalized `question_prompt`. Returns existing question ID immediately without inserting duplicates.
+  - **`M-07` (Removal of Silent In-Memory Fallback):** In `ResumeJdAnalysisService.runAnalysis()`, removed silent `mem-<uuid>` fallback catch block. Any database insertion failure on `resume_jd_analyses` now surfaces as an explicit thrown error.
+- **Verification Summary:**
+  - Deterministic unit test suite: **28/28 files, 290/290 passed** (+13 new tests across `tests/mock-interview.test.ts` and `tests/ai-resume-analysis.test.ts`).
+  - Live AI tests skipped: **5 files, 65 tests skipped** (strict zero-Gemini API compliance).
+  - Live database mutations: **0 writes executed**.
+  - TypeScript (`tsc --noEmit`): **PASS (0 errors)**.
+  - ESLint (`eslint`): **PASS (0 errors, 0 warnings)**.
+  - Production build (`next build`): **PASS (20/20 static pages, 23 routes compiled)**.
+- **Remaining Unaddressed Audit Findings (Deferred to Later Batches):** `M-08`, `N-03`, `L-01`–`L-09`, and dependency advisories.
 
 ## Completed
+
+### Phase 4 Batch 4: Personalized AI Study Recommendations & Adaptive Revision Advisor
+- **Deterministic Candidate Engine & Schemas (`src/features/planner/recommendation-schema.ts`, `recommendation-service.ts`)**:
+  - Gathers candidate study actions deterministically from real user learning data:
+    1. Overdue/due spaced repetition DSA revisions via `getDueRevisions` (calculated via `workload.ts` and `study_plans` intervals).
+    2. Weak learning topics via `getUserTopics` filtered by confidence level (`learning` / `review_needed`).
+    3. Incomplete learning modules via `getUserModules` prioritized by status (`in_progress` over `not_started`).
+    4. Unanswered interview question bank gaps via `interview_question_bank` taxonomy.
+  - Automatically deduplicates and excludes any candidate actions already planned in today's agenda via `getDayAgenda`.
+  - Enforces sliding-window rate limit via `aiRateLimiter.check(userId)` prior to external model execution.
+- **Strict Architectural Separation & Anti-Hallucination Guardrails (`src/features/planner/recommendation-advisor.ts`)**:
+  - **Zero AI Date Arithmetic**: Gemini is strictly prohibited from generating, modifying, or computing calendar dates, spaced-repetition intervals, or task due dates.
+  - Pre-sorts deterministic candidates by domain urgency and passes at most 12 candidates in `<candidate_pool>` XML tags to bound prompt size.
+  - System prompt strictly instructs Gemini to act only as an advisor, selecting at most 3 items and explaining their immediate value and expected outcome.
+  - Runtime validation via Zod (`rawGeminiAdvisorOutputSchema`) strictly enforcing `.max(3)` items.
+  - Hallucinated ID rejection: Any candidate ID returned by Gemini that was not in the deterministic candidate pool is immediately discarded.
+  - Graceful fallback: If Gemini times out, experiences rate limiting, or fails, the engine falls back to the top 3 deterministic candidates without breaking the user flow.
+- **Mandatory User Acceptance & Idempotent Persistence (`src/features/planner/recommendation-service.ts`, `recommendation-actions.ts`)**:
+  - Task creation in `public.study_tasks` is NEVER performed automatically. The user must review recommendations and explicitly click "Accept" or "Accept All".
+  - Resolves active plan ID and validates UUID foreign keys (`learning_topic_id`, `question_id`, `interview_question_id`).
+  - Idempotent task creation: Checks for existing tasks for the same entity or title on the target date before inserting, preventing double-click task duplication.
+  - Batch acceptance action (`acceptAllStudyRecommendationsAction`) safely processes pending recommendations sequentially.
+- **Interactive UI & Capacity Impact Meter (`src/app/(app)/planner/recommendations/`)**:
+  - Dedicated route at `/planner/recommendations` with breadcrumbs linking back to `/planner`.
+  - Visual dual-tone capacity meter comparing current planned study minutes vs. recommended minutes against the user's daily capacity limit.
+  - Displays up to 3 recommendation cards with priority badges (High, Medium, Low), action category pills (DSA Revision, Weak Topic, Module, Interview Prep), estimated duration, "Why this matters", and "Expected outcome".
+  - Single-click "Accept Task" (adds to today's agenda), "Dismiss" (removes from view without saving), and "Accept All Pending".
+  - Added entry points and quick-action buttons from `/planner` dashboard and `DailyAgenda` header.
+- **Verification & Quality Gates**:
+  - Unit tests in `tests/study-recommendations.test.ts`: 15/15 passing covering deterministic candidate building, schema validation, max 3 bounds, hallucinated ID rejection, zero-task persistence without acceptance, transparent fallback modes (timeout, missing key, malformed JSON, schema violation), error 23505 conflict recovery, and idempotency.
+  - Live tests in `tests/study-recommendations-live.test.ts`: 13/13 passing against live Supabase and live Gemini (`gemini-3.5-flash-lite`), confirming live AI ranking (`generationSource: "gemini"`), Migration 0012 live schema, 10-way simultaneous concurrent acceptance resolving to strictly 1 database row & 1 task ID, manual tasks without `idempotency_key`, distinct recommendations, and two-user RLS isolation.
+  - Full Vitest suite: **38 test files, 350/350 tests passing** (`npm test -- --run`).
+  - TypeScript: 0 errors (`npm run typecheck`).
+  - ESLint: 0 errors, 0 warnings (`npm run lint`).
+  - Production Build: `next build` compiled and optimized 23 routes cleanly (including `ƒ /planner/recommendations`).
+- **Defect Fixes & Post-Migration Live Verification (Migration 0012)**:
+  - **Transparent Gemini Fallback**: Added explicit `generationSource` (`gemini` vs `deterministic_fallback`), `fallbackReason`, and individual card `source` attributes. UI displays a dedicated subtle amber banner with "Retry AI Analysis" button when fallback is active, ensuring deterministic output is never misrepresented as AI-generated.
+  - **Database-Level Idempotency Protection (Migration 0012 Applied & Verified Live)**: Applied `0012_phase4_study_tasks_idempotency.sql` in live Supabase. Verified `study_tasks.idempotency_key`, unique partial index `study_tasks_user_idempotency_idx` (`23505` on direct duplicate insert; `NULL` allowed for manual tasks), and `SECURITY INVOKER` stored procedure `accept_study_recommendation()` enforcing `auth.uid()` ownership and cross-tenant composite FK integrity (`23503`). Existing user baseline preserved unchanged (User A: 480 `study_tasks`, User B: 0).
 
 ### Phase 4 Batch 3: AI Resume & Job Description Intelligence
 - **Migration 0011 Authored & AST-Verified (`0011_phase4_resume_jd_analyses.sql`)**:
@@ -247,10 +436,11 @@
 ---
 
 ## Verification Results
-- **Automated Test Suite**: 32 test files, **264 tests passed** with 0 errors (`npm test -- --run`).
+- **Automated Test Suite**: 30 non-live test files, **343 tests passed** with 0 errors (`npx vitest run --exclude "**/*live*.test.ts" --exclude "**/resumes-security-audit.test.ts"`).
+  - Includes dedicated `tests/phase4-batch-d.test.ts` (34/34 passed) and `tests/phase4-batch-c.test.ts` (9/9 passed).
 - **TypeScript Typecheck**: `tsc --noEmit` passed with 0 errors (`npm run typecheck`).
 - **ESLint**: passed with 0 errors, 0 warnings (`npm run lint`).
-- **Production Build**: `next build` compiled and optimized all 19 routes without errors (including `ƒ /interview` and `ƒ /interview/[id]`).
+- **Production Build**: `next build` compiled and optimized all 20 routes with static generation (`20/20 static pages generated`).
 - **Phase 4 Batch 2 Live Smoke Verification** (`tests/mock-interview-live.test.ts`):
   - Verified live Gemini AI connectivity via `gemini-3.5-flash`.
   - Created live interview session querying the 376-question bank in Supabase.

@@ -90,12 +90,19 @@ export default async function PlannerPage({ searchParams }: PlannerPageProps) {
             </div>
           </div>
 
-          <div className="pt-4">
+          <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
             <Link
               href="/planner/sprint"
               className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-amber-600 hover:bg-amber-500 text-white font-medium text-sm transition"
             >
               Preview & Configure Sprint <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/planner/recommendations"
+              className="inline-flex items-center gap-2 px-4 py-3 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-medium text-sm transition"
+            >
+              <Sparkles className="h-4 w-4 text-amber-400" />
+              AI Study Advisor
             </Link>
           </div>
         </div>
@@ -130,6 +137,13 @@ export default async function PlannerPage({ searchParams }: PlannerPageProps) {
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/planner/recommendations"
+            className="text-xs text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-800/80 hover:bg-amber-900/60 transition flex items-center gap-1.5"
+          >
+            <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+            AI Advisor
+          </Link>
           <Link
             href="/planner/sprint"
             className="text-xs text-neutral-400 hover:text-neutral-200 px-3 py-1.5 rounded-lg bg-neutral-900 border border-neutral-800 hover:bg-neutral-800 transition"

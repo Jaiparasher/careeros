@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { calculateCourseProgress } from "@/lib/domain/progress";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -14,10 +13,12 @@ import {
   CalendarCheck2,
   HelpCircle,
   ArrowRight,
+  AlertCircle,
 } from "lucide-react";
 import { getActivePlan, getDayAgenda, getPlanOverallStats } from "@/features/planner/service";
 import { getQuestionBankStats, type QuestionBankStats } from "@/features/interview/service";
 import { getDSAStats } from "@/features/dsa/service";
+import { getDashboardCourseProgress } from "@/features/learning/service";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -43,19 +44,15 @@ export default async function DashboardPage() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const dailyBudget = profile.daily_available_minutes || 120;
 
-  // 2. Fetch learning modules
-  const { data: rawModules } = await supabase
-    .from("learning_modules")
-    .select("module_number, title, completion_percent, status")
-    .eq("user_id", user.id)
-    .order("module_number", { ascending: true });
-
-  const modules = rawModules || [];
-  const aggregateProgress = calculateCourseProgress(modules);
-  const completedCount = modules.filter((m) => Number(m.completion_percent) === 100).length;
-  const inProgressModule = modules.find(
-    (m) => Number(m.completion_percent) > 0 && Number(m.completion_percent) < 100
-  );
+  // 2. Fetch learning modules using actual schema fields and explicit error handling
+  const courseProgress = await getDashboardCourseProgress(supabase, user.id);
+  const {
+    aggregateProgress,
+    totalModules,
+    completedCount,
+    inProgressModule,
+    error: modulesError,
+  } = courseProgress;
 
   // 3. Fetch active study plan and today's agenda
   const activePlan = await getActivePlan(supabase, user.id);
@@ -156,8 +153,8 @@ export default async function DashboardPage() {
         href: topTask.interview_question_id
           ? `/interview-questions/${topTask.interview_question_id}`
           : topTask.question_id
-          ? "/dsa"
-          : "/planner",
+            ? "/dsa"
+            : "/planner",
         btnText: "Open Task",
       });
     }
@@ -436,30 +433,51 @@ export default async function DashboardPage() {
                 <GraduationCap className="h-4 w-4 text-emerald-400" />
                 Course Modules (Spring Boot 0 to 100)
               </CardTitle>
-              <Badge variant="outline" className="border-emerald-700/80 text-emerald-400 text-xs font-mono">
-                {aggregateProgress.toFixed(2)}%
-              </Badge>
+              {modulesError ? (
+                <Badge variant="outline" className="border-rose-700/80 text-rose-400 text-xs">
+                  Unavailable
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="border-emerald-700/80 text-emerald-400 text-xs font-mono">
+                  {aggregateProgress.toFixed(2)}%
+                </Badge>
+              )}
             </div>
             <CardDescription className="text-neutral-400 text-xs">
-              20 modules • Arithmetic mean calculation across all module percentages
+              {totalModules > 0 ? `${totalModules} modules` : "Course modules"} • Arithmetic mean calculation across all module percentages
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 text-sm">
-            <div className="w-full bg-neutral-800 h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-emerald-500 h-full rounded-full transition-all duration-300"
-                style={{ width: `${Math.min(100, aggregateProgress)}%` }}
-              />
-            </div>
+            {modulesError ? (
+              <div className="rounded-lg border border-rose-800/70 bg-rose-950/30 p-3 text-xs text-rose-300 flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 shrink-0 text-rose-400 mt-0.5" />
+                <span>Unable to load course progress right now. Open Learning Roadmap to retry.</span>
+              </div>
+            ) : (
+              <>
+                <div className="w-full bg-neutral-800 h-2 rounded-full overflow-hidden">
+                  <div
+                    className="bg-emerald-500 h-full rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(100, aggregateProgress)}%` }}
+                  />
+                </div>
 
-            <div className="flex items-center justify-between text-xs text-neutral-400">
-              <span>{completedCount} of 20 modules completed (100%)</span>
-              {inProgressModule && (
-                <span className="text-amber-400">
-                  Mod {inProgressModule.module_number}: {inProgressModule.completion_percent}%
-                </span>
-              )}
-            </div>
+                <div className="flex items-center justify-between text-xs text-neutral-400">
+                  {totalModules > 0 ? (
+                    <span>
+                      {completedCount} of {totalModules} modules completed (100%)
+                    </span>
+                  ) : (
+                    <span>No course modules tracked yet</span>
+                  )}
+                  {inProgressModule && (
+                    <span className="text-amber-400">
+                      Mod {inProgressModule.module_number}: {inProgressModule.completion_percent}%
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
 
             <p className="text-[11px] text-neutral-500 leading-relaxed">
               Tracked alongside the decoupled Topic Confidence Matrix for interview readiness.

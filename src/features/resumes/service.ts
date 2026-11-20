@@ -540,3 +540,45 @@ export class ResumeService {
     };
   }
 }
+
+export interface ResumeApplicationOption {
+  id: string;
+  company_name: string;
+  role_title: string;
+}
+
+export interface ResumeApplicationOptionsResult {
+  applications: ResumeApplicationOption[];
+  error: string | null;
+}
+
+/**
+ * Fetches user-owned job applications for Resume & JD linking dropdowns
+ * using the actual `job_applications` schema (`id, company, role_title`).
+ */
+export async function getResumeApplicationOptions(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<ResumeApplicationOptionsResult> {
+  const { data, error } = await supabase
+    .from("job_applications")
+    .select("id, company, role_title")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    return {
+      applications: [],
+      error: `Failed to load job applications: ${error.message}`,
+    };
+  }
+
+  return {
+    applications: (data || []).map((app) => ({
+      id: String(app.id),
+      company_name: String(app.company),
+      role_title: String(app.role_title),
+    })),
+    error: null,
+  };
+}

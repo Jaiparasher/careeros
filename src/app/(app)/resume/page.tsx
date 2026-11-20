@@ -1,7 +1,10 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { FileText } from "lucide-react";
-import { ResumeService } from "@/features/resumes/service";
+import { AlertCircle, FileText } from "lucide-react";
+import {
+  ResumeService,
+  getResumeApplicationOptions,
+} from "@/features/resumes/service";
 import { ResumeViewContainer } from "./components/resume-view-container";
 
 export const metadata = {
@@ -22,23 +25,15 @@ export default async function ResumePage() {
 
   const resumeService = new ResumeService(supabase);
 
-  // Fetch resumes and saved job descriptions in parallel
-  const [resumes, jobDescriptions, applicationsRes] = await Promise.all([
+  // Fetch resumes, saved job descriptions, and user job applications in parallel
+  const [resumes, jobDescriptions, applicationsResult] = await Promise.all([
     resumeService.getResumes(user.id),
     resumeService.getJobDescriptions(user.id),
-    supabase
-      .from("job_applications")
-      .select("id, company_name, role_title")
-      .eq("user_id", user.id)
-      .is("deleted_at", null)
-      .order("created_at", { ascending: false }),
+    getResumeApplicationOptions(supabase, user.id),
   ]);
 
-  const applicationOptions = (applicationsRes.data || []).map((app) => ({
-    id: app.id,
-    company_name: app.company_name,
-    role_title: app.role_title,
-  }));
+  const { applications: applicationOptions, error: applicationsError } =
+    applicationsResult;
 
   return (
     <div className="space-y-6">
@@ -56,6 +51,13 @@ export default async function ResumePage() {
           and run deterministic skill alignment analysis without external AI.
         </p>
       </div>
+
+      {applicationsError && (
+        <div className="rounded-lg border border-amber-800/80 bg-amber-950/30 p-3.5 text-xs text-amber-200 flex items-center gap-2">
+          <AlertCircle className="h-4 w-4 shrink-0 text-amber-400" />
+          <span>{applicationsError}</span>
+        </div>
+      )}
 
       <ResumeViewContainer
         resumes={resumes}

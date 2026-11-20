@@ -14,6 +14,7 @@ import {
   ChevronRight,
   ArrowRight,
   CalendarCheck2,
+  Sparkles,
 } from "lucide-react";
 import type { DayAgendaResult, StudyPlanRecord } from "@/features/planner/service";
 import { toggleTaskAction, rescheduleTaskAction } from "@/features/planner/actions";
@@ -85,14 +86,14 @@ export function DailyAgenda({ plan, agenda, stats }: DailyAgendaProps) {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
-            <div className="text-right">
-              <span className="text-xs text-neutral-400">Overall Progress:</span>{" "}
-              <span className="font-mono text-sm font-bold text-emerald-400">
-                {stats.completedTasks} / {stats.totalTasks}
-              </span>{" "}
-              <span className="text-xs text-neutral-500">({stats.percentCompleted}%)</span>
-            </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/planner/recommendations"
+              className="text-xs text-amber-300 hover:text-amber-200 px-3 py-1.5 rounded-lg bg-amber-950/60 border border-amber-800/80 hover:bg-amber-900/60 transition flex items-center gap-1.5"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-amber-400" />
+              AI Advisor
+            </Link>
             <Link
               href="/planner/sprint"
               className="text-xs text-neutral-300 hover:text-white px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 transition"

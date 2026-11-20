@@ -1,3 +1,28 @@
+/**
+ * CareerOS AI Rate Limiter
+ *
+ * Implements a sliding-window in-memory rate limiter for user-triggered AI actions
+ * (Resume JD intelligence, Adaptive Study Advisor, Mock Interview evaluation/retry).
+ *
+ * ARCHITECTURAL DESIGN & CONSTRAINTS:
+ * 1. Monolithic / Zero-Dependency:
+ *    Adheres to CareerOS non-negotiable constraint #3 (no external Redis, Kafka,
+ *    microservices or auxiliary infrastructure). Uses local process memory (`Map`).
+ *
+ * 2. Serverless / Multi-Instance Limitation (Finding L-09):
+ *    - In multi-instance serverless deployments (such as Vercel Edge / Lambda with horizontal autoscaling),
+ *      each runtime instance or cold-start worker maintains its own isolated memory state.
+ *    - Sliding-window quotas are therefore enforced per-instance lifecycle rather than globally
+ *      across multiple concurrent container replicas.
+ *    - For single-instance, local development, and individual user sessions, this provides
+ *      lightweight, sub-millisecond rate protection without operational overhead or external costs.
+ *
+ * 3. Distributed Production Evolution Path:
+ *    - If horizontally scaled multi-region production with strict shared quotas is needed,
+ *      this exact contract (`check(identifier, limit, windowMs)`, `RateLimitResult`) can be backed
+ *      by Upstash Redis or a Postgres atomic token-bucket RPC table without modifying calling code.
+ */
+
 export interface RateLimitResult {
   allowed: boolean;
   remaining: number;

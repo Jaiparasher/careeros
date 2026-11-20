@@ -7,6 +7,12 @@ import {
   type EvaluationFeedback,
 } from "./mock-interview-schema";
 import { evaluateAnswerWithGemini } from "./mock-evaluator";
+import { aiRateLimiter, AiServiceError, geminiService } from "@/features/ai";
+
+interface QueryResultWithMaybeSingle {
+  maybeSingle?: () => Promise<{ data: Record<string, unknown> | null; error: { message?: string } | null }>;
+  single?: () => Promise<{ data: Record<string, unknown> | null; error: { message?: string } | null }>;
+}
 
 const TYPE_SKILL_MAP: Record<string, string[]> = {
   "Java Backend": [
@@ -68,6 +74,26 @@ const TYPE_SKILL_MAP: Record<string, string[]> = {
   ],
   "Mixed": [],
 };
+
+/**
+ * Parses numeric interview question and session scores strictly within [0, 10].
+ * Handles numbers, PostgreSQL numeric strings ("8.50"), and returns null for invalid/out-of-range values.
+ */
+export function parseScore(val: unknown): number | null {
+  if (val === null || val === undefined) return null;
+  if (typeof val === "string") {
+    const trimmed = val.trim();
+    if (trimmed === "") return null;
+    const num = Number(trimmed);
+    if (!Number.isFinite(num) || num < 0 || num > 10) return null;
+    return num;
+  }
+  if (typeof val === "number") {
+    if (!Number.isFinite(val) || val < 0 || val > 10) return null;
+    return val;
+  }
+  return null;
+}
 
 export class MockInterviewService {
   private supabase: SupabaseClient;
@@ -182,8 +208,8 @@ export class MockInterviewService {
     const difficultyForDb = input.difficulty === "easy"
       ? "beginner"
       : input.difficulty === "hard"
-      ? "advanced"
-      : "intermediate";
+        ? "advanced"
+        : "intermediate";
 
     // 4. Create interview_session row
     const sessionInsertPayload: Record<string, unknown> = {
@@ -195,6 +221,9 @@ export class MockInterviewService {
       interview_type: input.interviewType || "Technical",
       selected_skills: targetSkills,
       total_questions: selectedBankQuestions.length,
+      provider: "gemini",
+      model: geminiService.getModel(),
+      prompt_version: "mock-eval-v1",
     };
 
     let sessionRecord: MockInterviewSession | null = null;
@@ -212,6 +241,9 @@ export class MockInterviewService {
         difficulty: difficultyForDb,
         duration_target_minutes: durationTarget,
         status: "in_progress",
+        provider: "gemini",
+        model: geminiService.getModel(),
+        prompt_version: "mock-eval-v1",
       };
       const { data: fallbackSession, error: fallbackError } = await this.supabase
         .from("interview_sessions")
@@ -313,9 +345,11 @@ export class MockInterviewService {
 
   async submitAnswer(
     userId: string,
-    input: SubmitAnswerInput
+    input: SubmitAnswerInput,
+    options?: { isRetry?: boolean }
   ): Promise<{ question: MockInterviewQuestion; session: MockInterviewSession }> {
     const { sessionId, questionId, answer = "", skip = false } = input;
+    const isRetry = Boolean(options?.isRetry);
 
     // 1. Fetch question
     const { data: qRecord, error: qErr } = await this.supabase
@@ -340,6 +374,28 @@ export class MockInterviewService {
 
     if (sErr || !session) {
       throw new Error("Interview session not found.");
+    }
+
+    // 2b. Session status guard (M-02)
+    if (session.status === "completed" || session.status === "abandoned") {
+      throw new Error("Cannot submit answer to a completed or abandoned interview session.");
+    }
+
+    // 2c. Question evaluation status guard (M-02)
+    if (qRecord.evaluation_status === "evaluating") {
+      throw new Error("Question is currently being evaluated. Please wait.");
+    }
+    if (qRecord.evaluation_status === "evaluated") {
+      throw new Error("Question has already been evaluated. Use retry if you wish to re-evaluate.");
+    }
+    if (qRecord.evaluation_status === "skipped") {
+      throw new Error("Cannot submit answer to a skipped question.");
+    }
+    if (!isRetry && qRecord.evaluation_status === "failed") {
+      throw new Error("Question evaluation previously failed. Use retry if you wish to re-evaluate.");
+    }
+    if (isRetry && qRecord.evaluation_status !== "failed") {
+      throw new Error("Only failed evaluations can be retried.");
     }
 
     // 3. Fetch linked question bank entry (for rubric and expected points)
@@ -383,77 +439,118 @@ export class MockInterviewService {
         evaluated_at: new Date().toISOString(),
       };
 
-      let updatedQ: unknown = null;
-      const { data: qRes, error: uErr } = await this.supabase
+      // Atomic conditional update: only update if still pending or failed
+      const skipQuery = this.supabase
         .from("interview_questions")
         .update(updateData)
         .eq("id", questionId)
+        .eq("session_id", sessionId)
         .eq("user_id", userId)
-        .select()
-        .single();
+        .select();
 
-      if (uErr) {
-        // Fallback for base columns if migration 0010 not applied yet
-        const baseSkipUpdate = {
-          user_answer: "[Skipped by candidate]",
-          technical_correctness: 1,
-          completeness: 1,
-          clarity: 1,
-          practical_depth: 1,
-          tradeoff_awareness: 1,
-          strengths: "None - question skipped.",
-          gaps: "Question was skipped by candidate.",
-          improved_answer: sampleAnswer || "Review expected technical points.",
-        };
-        const { data: fbQ, error: fbErr } = await this.supabase
+      const skipExecutor = skipQuery as unknown as QueryResultWithMaybeSingle;
+      const { data: qRes, error: uErr } =
+        typeof skipExecutor.maybeSingle === "function"
+          ? await skipExecutor.maybeSingle()
+          : typeof skipExecutor.single === "function"
+            ? await skipExecutor.single()
+            : await (skipQuery as unknown as Promise<{ data: Record<string, unknown> | null; error: { message?: string } | null }>);
+
+      if (uErr || !qRes) {
+        const { data: checkQ } = await this.supabase
           .from("interview_questions")
-          .update(baseSkipUpdate)
+          .select("evaluation_status")
           .eq("id", questionId)
+          .eq("session_id", sessionId)
           .eq("user_id", userId)
-          .select()
           .single();
 
-        if (fbErr || !fbQ) {
-          throw new Error(`Failed to update skipped question: ${fbErr?.message || uErr.message}`);
+        if (checkQ?.evaluation_status === "evaluating") {
+          throw new Error("Question is currently being evaluated. Please wait.");
         }
-        updatedQ = {
-          ...fbQ,
-          score: 0,
-          evaluation_status: "skipped",
-          evaluated_at: new Date().toISOString(),
-        };
-      } else {
-        updatedQ = qRes;
+        if (checkQ?.evaluation_status === "evaluated") {
+          throw new Error("Question has already been evaluated. Use retry if you wish to re-evaluate.");
+        }
+        if (checkQ?.evaluation_status === "skipped") {
+          throw new Error("Cannot submit answer to a skipped question.");
+        }
+        throw new Error(`Failed to update skipped question: ${uErr?.message || "Concurrent update conflict."}`);
       }
 
       const updatedSession = await this.checkAndFinalizeSession(userId, sessionId);
-      return { question: updatedQ as MockInterviewQuestion, session: updatedSession };
+      return { question: qRes as unknown as MockInterviewQuestion, session: updatedSession };
     }
 
-    // 5. Handle SUBMIT ANSWER
-    // First save user answer to prevent any loss of user work
-    const { error: preSaveErr } = await this.supabase
+    // 5. Handle SUBMIT ANSWER (or RETRY)
+    // Atomic state claim: only ONE request can transition from eligible status to 'evaluating'
+    // - A new submission may claim only an initial pending question (or NULL for legacy rows).
+    // - A retry may claim only a failed question.
+    // - A question already evaluating, evaluated, or skipped must never be claimed.
+    let claimQuery = this.supabase
       .from("interview_questions")
       .update({
         user_answer: answer.trim(),
         evaluation_status: "evaluating",
       })
       .eq("id", questionId)
+      .eq("session_id", sessionId)
       .eq("user_id", userId);
 
-    if (preSaveErr) {
-      // Fallback if evaluation_status does not exist yet
-      await this.supabase
+    if (isRetry) {
+      // Retries can ONLY claim questions in 'failed' status
+      claimQuery = claimQuery.eq("evaluation_status", "failed");
+    } else if (qRecord.evaluation_status === null) {
+      // Legacy pre-migration row where evaluation_status is NULL
+      claimQuery =
+        typeof claimQuery.is === "function"
+          ? claimQuery.is("evaluation_status", null)
+          : claimQuery.eq("evaluation_status", null as unknown as string);
+    } else {
+      // Normal submission can ONLY claim questions in 'pending' status
+      claimQuery = claimQuery.eq("evaluation_status", "pending");
+    }
+
+    const claimExecutor = claimQuery.select() as unknown as QueryResultWithMaybeSingle;
+    const { data: claimedRecord, error: claimErr } =
+      typeof claimExecutor.maybeSingle === "function"
+        ? await claimExecutor.maybeSingle()
+        : typeof claimExecutor.single === "function"
+          ? await claimExecutor.single()
+          : await (claimQuery as unknown as Promise<{ data: Record<string, unknown> | null; error: { message?: string } | null }>);
+
+    if (claimErr || !claimedRecord) {
+      // Concurrency check: another concurrent request claimed or completed the question
+      const { data: freshQ } = await this.supabase
         .from("interview_questions")
-        .update({
-          user_answer: answer.trim(),
-        })
+        .select("evaluation_status")
         .eq("id", questionId)
-        .eq("user_id", userId);
+        .eq("session_id", sessionId)
+        .eq("user_id", userId)
+        .single();
+
+      if (freshQ?.evaluation_status === "evaluating") {
+        throw new Error("Question is currently being evaluated. Please wait.");
+      }
+      if (freshQ?.evaluation_status === "evaluated") {
+        throw new Error("Question has already been evaluated. Use retry if you wish to re-evaluate.");
+      }
+      if (freshQ?.evaluation_status === "skipped") {
+        throw new Error("Cannot submit answer to a skipped question.");
+      }
+      throw new Error(isRetry ? "Only failed evaluations can be retried." : "Question is not eligible for evaluation.");
     }
 
     let evaluation: EvaluationFeedback;
     try {
+      const rateLimit = aiRateLimiter.check(userId);
+      if (!rateLimit.allowed) {
+        throw new AiServiceError(
+          `Rate limit exceeded. Please wait ${rateLimit.retryAfterSeconds} seconds before retrying.`,
+          "RATE_LIMITED",
+          429
+        );
+      }
+
       evaluation = await evaluateAnswerWithGemini({
         questionText: qRecord.question_text,
         skillName,
@@ -464,24 +561,13 @@ export class MockInterviewService {
       });
     } catch (err: unknown) {
       // Mark as failed so user can see retry button
-      const { error: failErr } = await this.supabase
+      await this.supabase
         .from("interview_questions")
         .update({
           evaluation_status: "failed",
         })
         .eq("id", questionId)
         .eq("user_id", userId);
-
-      if (failErr) {
-        // Fallback: update user answer to preserve
-        await this.supabase
-          .from("interview_questions")
-          .update({
-            user_answer: answer.trim(),
-          })
-          .eq("id", questionId)
-          .eq("user_id", userId);
-      }
 
       throw err;
     }
@@ -581,6 +667,33 @@ export class MockInterviewService {
     sessionId: string,
     questionId: string
   ): Promise<{ question: MockInterviewQuestion; session: MockInterviewSession }> {
+    // 1. Rate limiter check (M-01) - reject rate-limited retry upfront before ANY DB mutation or AI call
+    const rateLimit = aiRateLimiter.check(userId);
+    if (!rateLimit.allowed) {
+      throw new AiServiceError(
+        `Rate limit exceeded. Please wait ${rateLimit.retryAfterSeconds} seconds before retrying.`,
+        "RATE_LIMITED",
+        429
+      );
+    }
+
+    // 2. Guard against retry on completed or abandoned session (M-02)
+    const { data: session, error: sErr } = await this.supabase
+      .from("interview_sessions")
+      .select("id, status")
+      .eq("id", sessionId)
+      .eq("user_id", userId)
+      .single();
+
+    if (sErr || !session) {
+      throw new Error("Interview session not found.");
+    }
+
+    if (session.status === "completed" || session.status === "abandoned") {
+      throw new Error("Cannot retry evaluation on a completed or abandoned interview session.");
+    }
+
+    // 3. Fetch and guard question record (M-02)
     const { data: qRecord, error: qErr } = await this.supabase
       .from("interview_questions")
       .select("*")
@@ -593,12 +706,27 @@ export class MockInterviewService {
       throw new Error("No submitted answer found to retry.");
     }
 
-    return this.submitAnswer(userId, {
-      sessionId,
-      questionId,
-      answer: qRecord.user_answer,
-      skip: false,
-    });
+    if (qRecord.evaluation_status === "skipped") {
+      throw new Error("Cannot retry evaluation on a skipped question.");
+    }
+
+    if (qRecord.evaluation_status !== "failed") {
+      throw new Error("Only failed evaluations can be retried.");
+    }
+
+    // 4. Concurrency-safe retry delegation (M-02)
+    // Directly delegate to submitAnswer with isRetry: true.
+    // submitAnswer will atomically transition evaluation_status from 'failed' -> 'evaluating'.
+    return this.submitAnswer(
+      userId,
+      {
+        sessionId,
+        questionId,
+        answer: qRecord.user_answer,
+        skip: false,
+      },
+      { isRetry: true }
+    );
   }
 
   async checkAndFinalizeSession(
@@ -614,9 +742,7 @@ export class MockInterviewService {
     const allCompleted = session.questions.every(
       (q) =>
         q.user_answer !== null &&
-        (q.evaluation_status === "evaluated" ||
-          q.evaluation_status === "skipped" ||
-          q.technical_correctness !== null)
+        (q.evaluation_status === "evaluated" || q.evaluation_status === "skipped")
     );
 
     if (allCompleted && session.status !== "completed") {
@@ -653,16 +779,18 @@ export class MockInterviewService {
         skippedCount++;
       } else if (q.user_answer) {
         attemptedCount++;
-        // If score is stored (0-10)
-        const qScore = typeof q.score === "number"
-          ? q.score
-          : q.technical_correctness
-          ? ((q.technical_correctness +
-              (q.completeness || 3) +
-              (q.clarity || 3) +
-              (q.practical_depth || 3) +
-              (q.tradeoff_awareness || 3)) / 25) * 10
-          : 0;
+        // Parse score safely (handles both number and PostgreSQL numeric(4,2) string)
+        const parsedScore = parseScore(q.score);
+        const qScore =
+          parsedScore !== null
+            ? parsedScore
+            : q.technical_correctness
+              ? ((Number(q.technical_correctness) +
+                Number(q.completeness || 3) +
+                Number(q.clarity || 3) +
+                Number(q.practical_depth || 3) +
+                Number(q.tradeoff_awareness || 3)) / 25) * 10
+              : 0;
 
         totalScore += qScore;
         scoredCount++;
@@ -691,7 +819,8 @@ export class MockInterviewService {
 
     const recommendedRevisions = questions
       .filter((q) => {
-        const qScore = typeof q.score === "number" ? q.score : (q.technical_correctness || 0) * 2;
+        const parsed = parseScore(q.score);
+        const qScore = parsed !== null ? parsed : (Number(q.technical_correctness) || 0) * 2;
         return qScore < 7;
       })
       .map((q) => ({
@@ -712,9 +841,8 @@ export class MockInterviewService {
       recommendedRevisions,
     };
 
-    const overallFeedback = `Interview finished with an overall score of ${overallScore}/10 (${overallPercentage}%). ${
-      strongAreas.length > 0 ? `Demonstrated solid competency in: ${strongAreas.join(", ")}. ` : ""
-    }${weakAreas.length > 0 ? `Targeted areas for improvement: ${weakAreas.join(", ")}.` : "Consistent performance across evaluated questions."}`;
+    const overallFeedback = `Interview finished with an overall score of ${overallScore}/10 (${overallPercentage}%). ${strongAreas.length > 0 ? `Demonstrated solid competency in: ${strongAreas.join(", ")}. ` : ""
+      }${weakAreas.length > 0 ? `Targeted areas for improvement: ${weakAreas.join(", ")}.` : "Consistent performance across evaluated questions."}`;
 
     // Update session
     const updatePayload: Record<string, unknown> = {

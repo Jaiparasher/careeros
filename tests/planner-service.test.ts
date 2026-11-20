@@ -8,6 +8,7 @@ import {
   getUserStudyCapacity,
   toggleTaskStatus,
   rescheduleTask,
+  generateSprintPreview,
 } from "@/features/planner/service";
 
 describe("Planner Workload: Day 31+ Adaptive Prioritization", () => {
@@ -149,5 +150,133 @@ describe("Planner Service Operations", () => {
         planned_for: "2026-11-20",
       })
     );
+  });
+});
+
+describe("Planner Service: generateSprintPreview DSA Metadata (M-11)", () => {
+  function createSprintPreviewSupabase(dsaResult: { data: unknown[] | null; error: { message: string } | null }) {
+    const dsaSelectSpy = vi.fn();
+
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === "profiles") {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                single: vi.fn().mockResolvedValue({
+                  data: { daily_available_minutes: 120, target_roles: ["Java Backend"] },
+                  error: null,
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === "dsa_questions") {
+          dsaSelectSpy.mockReturnValue({
+            eq: vi.fn().mockReturnValue({
+              not: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue(dsaResult),
+              }),
+            }),
+          });
+          return { select: dsaSelectSpy };
+        }
+        return {};
+      }),
+    } as unknown as SupabaseClient;
+
+    return { supabase, dsaSelectSpy };
+  }
+
+  it("queries dsa_questions.patterns (not topic) and maps single, multiple, and empty patterns safely", async () => {
+    const { supabase, dsaSelectSpy } = createSprintPreviewSupabase({
+      data: [
+        {
+          collection_order: 1,
+          title: "Two Sum",
+          difficulty: "easy",
+          patterns: ["Hash Map"],
+        },
+        {
+          collection_order: 2,
+          title: "Valid Palindrome",
+          difficulty: "easy",
+          patterns: ["String", "Two Pointers"],
+        },
+        {
+          collection_order: 3,
+          title: "Merge Intervals",
+          difficulty: "medium",
+          patterns: [],
+        },
+        {
+          collection_order: 4,
+          title: "LRU Cache",
+          difficulty: "medium",
+          patterns: null,
+        },
+      ],
+      error: null,
+    });
+
+    const preview = await generateSprintPreview(supabase, "user-123", 30, "2026-11-18");
+
+    expect(dsaSelectSpy).toHaveBeenCalledWith("collection_order, title, difficulty, patterns");
+    expect(dsaSelectSpy.mock.calls[0]?.[0]).not.toContain("topic");
+
+    expect(preview.dailyAvailableMinutes).toBe(120);
+    expect(preview.schedule.durationDays).toBe(30);
+    expect(preview.schedule.totalGrindScheduled).toBe(75);
+
+    // One pattern
+    expect(preview.grindProblemsMap[1]).toEqual({
+      title: "Two Sum",
+      difficulty: "easy",
+      topic: "Hash Map",
+      patterns: ["Hash Map"],
+    });
+
+    // Multiple patterns
+    expect(preview.grindProblemsMap[2]).toEqual({
+      title: "Valid Palindrome",
+      difficulty: "easy",
+      topic: "String, Two Pointers",
+      patterns: ["String", "Two Pointers"],
+    });
+
+    // Empty array pattern fallback
+    expect(preview.grindProblemsMap[3]).toEqual({
+      title: "Merge Intervals",
+      difficulty: "medium",
+      topic: "Algorithms",
+      patterns: [],
+    });
+
+    // Null pattern fallback
+    expect(preview.grindProblemsMap[4]).toEqual({
+      title: "LRU Cache",
+      difficulty: "medium",
+      topic: "Algorithms",
+      patterns: [],
+    });
+  });
+
+  it("returns empty grindProblemsMap safely when no DSA questions exist", async () => {
+    const { supabase } = createSprintPreviewSupabase({ data: [], error: null });
+
+    const preview = await generateSprintPreview(supabase, "user-123", 45, "2026-11-18");
+    expect(preview.schedule.durationDays).toBe(45);
+    expect(preview.grindProblemsMap).toEqual({});
+  });
+
+  it("throws explicit error when dsa_questions query fails", async () => {
+    const { supabase } = createSprintPreviewSupabase({
+      data: null,
+      error: { message: "permission denied" },
+    });
+
+    await expect(
+      generateSprintPreview(supabase, "user-123", 30, "2026-11-18")
+    ).rejects.toThrow("Failed to fetch Grind 75 problems metadata: permission denied");
   });
 });

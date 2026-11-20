@@ -1,7 +1,8 @@
-import { geminiService } from "@/features/ai";
+import "server-only";
+
+import { geminiService, AiServiceError, MAX_PROMPT_LENGTH } from "@/features/ai";
 import {
   rawGeminiAnalysisOutputSchema,
-  type RawGeminiAnalysisOutput,
   type AiResumeJdAnalysisReport,
   type TargetedInterviewQuestion,
 } from "./ai-analyzer-schema";
@@ -59,27 +60,26 @@ export function extractJsonFromText(rawText: string): string {
   return trimmed;
 }
 
-export async function generateAiResumeJdAnalysis(
-  params: GenerateAiAnalysisParams
-): Promise<AiResumeJdAnalysisReport> {
+export function buildAnalysisPrompt(params: GenerateAiAnalysisParams): string {
   const {
     resumeText,
-    resumeVersion,
     jdText,
     company,
     roleTitle,
     targetRole,
-    bankQuestions = [],
   } = params;
 
   // Bound text sizes for token safety and strict adherence to MAX_PROMPT_LENGTH (10,000 chars)
-  const safeResumeText = resumeText.slice(0, 3800);
-  const safeJdText = jdText.slice(0, 3800);
+  const safeResumeText = resumeText.slice(0, 3500);
+  const safeJdText = jdText.slice(0, 3500);
+  const safeCompany = company.slice(0, 100);
+  const safeRoleTitle = roleTitle.slice(0, 100);
+  const safeTargetRole = (targetRole || "Software Development Engineer (Java / Backend / Full Stack)").slice(0, 100);
 
   const promptContent = `TARGET OPPORTUNITY CONTEXT:
-Company: ${company}
-Role Title: ${roleTitle}
-Target Role Track: ${targetRole || "Software Development Engineer (Java / Backend / Full Stack)"}
+Company: ${safeCompany}
+Role Title: ${safeRoleTitle}
+Target Role Track: ${safeTargetRole}
 
 <resume_text>
 ${safeResumeText}
@@ -131,41 +131,37 @@ Analyze the candidate's resume against the job description now. Be concise and s
   ]
 }`;
 
-  let aiResult;
-  try {
-    aiResult = await geminiService.generateContent({
-      prompt: promptContent,
-      systemInstruction: ANALYSIS_SYSTEM_INSTRUCTION,
-      temperature: 0.2,
-      maxOutputTokens: 4096,
-      timeoutMs: 60_000,
-    });
-  } catch (err: unknown) {
-    const isRetryable =
-      err instanceof Error &&
-      (err.message.includes("quota") ||
-        err.message.includes("rate limit") ||
-        err.message.includes("Failed to communicate with AI provider") ||
-        (err as { code?: string })?.code === "PROVIDER_ERROR" ||
-        (err as { code?: string })?.code === "QUOTA_EXCEEDED");
+  // Enforce boundary strictly on final prompt after all templates and metadata are combined
+  return promptContent.length > MAX_PROMPT_LENGTH
+    ? promptContent.slice(0, MAX_PROMPT_LENGTH)
+    : promptContent;
+}
 
-    if (isRetryable) {
-      await new Promise((r) => setTimeout(r, 3500));
-      aiResult = await geminiService.generateContent({
-        prompt: promptContent,
-        systemInstruction: ANALYSIS_SYSTEM_INSTRUCTION,
-        temperature: 0.2,
-        maxOutputTokens: 4096,
-        timeoutMs: 60_000,
-      });
-    } else {
-      throw err;
-    }
-  }
+export async function generateAiResumeJdAnalysis(
+  params: GenerateAiAnalysisParams
+): Promise<AiResumeJdAnalysisReport> {
+  const {
+    resumeVersion,
+    company,
+    roleTitle,
+    targetRole,
+    bankQuestions = [],
+  } = params;
+
+  const finalPrompt = buildAnalysisPrompt(params);
+
+  // Call geminiService directly (geminiService already handles bounded transient retries internally)
+  const aiResult = await geminiService.generateContent({
+    prompt: finalPrompt,
+    systemInstruction: ANALYSIS_SYSTEM_INSTRUCTION,
+    temperature: 0.2,
+    maxOutputTokens: 4096,
+    timeoutMs: 60_000,
+  });
 
   const rawJson = extractJsonFromText(aiResult.text);
 
-  let parsedObject: unknown;
+  let parsedObject: unknown = null;
   try {
     parsedObject = JSON.parse(rawJson);
   } catch {
@@ -175,61 +171,47 @@ Analyze the candidate's resume against the job description now. Be concise and s
       );
       parsedObject = JSON.parse(sanitized);
     } catch {
-      parsedObject = {};
+      parsedObject = null;
     }
   }
 
-  const validated = rawGeminiAnalysisOutputSchema.safeParse(parsedObject);
-
-  let output: RawGeminiAnalysisOutput;
-  if (!validated.success) {
-    // Normalization fallback for partial/structural variations
-    const obj = (parsedObject as Record<string, unknown>) || {};
-    output = {
-      readinessLevel:
-        (obj.readinessLevel as RawGeminiAnalysisOutput["readinessLevel"]) || "Moderate Match",
-      headline: String(obj.headline || `${roleTitle} Alignment Analysis`),
-      executiveSummary: String(
-        obj.executiveSummary ||
-          "Evaluation completed. Review matching competencies and addressed gap areas."
-      ),
-      keyStrengthsSummary: Array.isArray(obj.keyStrengthsSummary)
-        ? (obj.keyStrengthsSummary as string[])
-        : ["Solid core engineering background demonstrated."],
-      criticalGapsSummary: Array.isArray(obj.criticalGapsSummary)
-        ? (obj.criticalGapsSummary as string[])
-        : ["Review JD-specific domain tools and architecture depth."],
-      matchingSkills: Array.isArray(obj.matchingSkills) ? (obj.matchingSkills as RawGeminiAnalysisOutput["matchingSkills"]) : [],
-      mentionedNotDemonstrated: Array.isArray(obj.mentionedNotDemonstrated)
-        ? (obj.mentionedNotDemonstrated as RawGeminiAnalysisOutput["mentionedNotDemonstrated"])
-        : [],
-      missingSkills: Array.isArray(obj.missingSkills) ? (obj.missingSkills as RawGeminiAnalysisOutput["missingSkills"]) : [],
-      partiallyMatchingOrRelated: Array.isArray(obj.partiallyMatchingOrRelated)
-        ? (obj.partiallyMatchingOrRelated as RawGeminiAnalysisOutput["partiallyMatchingOrRelated"])
-        : [],
-      demonstratedExperience: Array.isArray(obj.demonstratedExperience)
-        ? (obj.demonstratedExperience as RawGeminiAnalysisOutput["demonstratedExperience"])
-        : [],
-      undemonstratedRequirements: Array.isArray(obj.undemonstratedRequirements)
-        ? (obj.undemonstratedRequirements as RawGeminiAnalysisOutput["undemonstratedRequirements"])
-        : [],
-      jdKeywords: Array.isArray(obj.jdKeywords) ? (obj.jdKeywords as RawGeminiAnalysisOutput["jdKeywords"]) : [],
-      bulletImprovements: Array.isArray(obj.bulletImprovements)
-        ? (obj.bulletImprovements as RawGeminiAnalysisOutput["bulletImprovements"])
-        : [],
-      screeningQuestions: Array.isArray(obj.screeningQuestions)
-        ? (obj.screeningQuestions as RawGeminiAnalysisOutput["screeningQuestions"])
-        : [],
-      technicalInterviewTopics: Array.isArray(obj.technicalInterviewTopics)
-        ? (obj.technicalInterviewTopics as RawGeminiAnalysisOutput["technicalInterviewTopics"])
-        : [],
-      nicheQuestionsNeeded: Array.isArray(obj.nicheQuestionsNeeded)
-        ? (obj.nicheQuestionsNeeded as RawGeminiAnalysisOutput["nicheQuestionsNeeded"])
-        : [],
-    };
-  } else {
-    output = validated.data;
+  // Reject completely unparseable or empty responses instead of fabricating placeholder data
+  if (!parsedObject || typeof parsedObject !== "object" || Object.keys(parsedObject).length === 0) {
+    throw new AiServiceError(
+      "AI analysis response was malformed or could not be parsed as valid JSON.",
+      "PROVIDER_ERROR",
+      502
+    );
   }
+
+  // Reject responses that lack core domain analysis fields rather than fabricating placeholder reports
+  const obj = parsedObject as Record<string, unknown>;
+  const hasDomainKeys = Boolean(
+    obj.readinessLevel ||
+    obj.headline ||
+    obj.executiveSummary ||
+    Array.isArray(obj.matchingSkills) ||
+    Array.isArray(obj.missingSkills)
+  );
+  if (!hasDomainKeys) {
+    throw new AiServiceError(
+      "AI analysis response was malformed or failed schema validation: Missing required domain analysis fields.",
+      "PROVIDER_ERROR",
+      502
+    );
+  }
+
+  const validated = rawGeminiAnalysisOutputSchema.safeParse(parsedObject);
+  if (!validated.success) {
+    throw new AiServiceError(
+      `AI analysis response was malformed or failed schema validation: ${validated.error.issues.map((i) => i.message).join(", ")}`,
+      "PROVIDER_ERROR",
+      502,
+      validated.error.issues
+    );
+  }
+
+  const output = validated.data;
 
   // Assemble Targeted Interview Questions:
   // 1. Existing Bank Questions first (avoid duplicates)

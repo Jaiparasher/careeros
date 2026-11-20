@@ -1,3 +1,5 @@
+import "server-only";
+
 import { GoogleGenAI } from "@google/genai";
 import { getAiConfig } from "@/lib/env";
 import {
@@ -178,6 +180,7 @@ export class GeminiService {
     const client = this.getClient();
     const model = this.getModel();
     const timeoutMs = options.timeoutMs ?? 30_000;
+    const startTime = Date.now();
 
     const controller = new AbortController();
     let timer: NodeJS.Timeout | undefined;
@@ -188,6 +191,30 @@ export class GeminiService {
         reject(new Error("AI_REQUEST_TIMEOUT"));
       }, timeoutMs);
     });
+    // Attach noop catch handler to prevent unhandled rejection if response arrives before timeout
+    timeoutPromise.catch(() => { });
+
+    // Abort-aware sleep helper that wakes immediately if timeout occurs during backoff
+    const sleepWithAbort = (ms: number): Promise<void> => {
+      return new Promise<void>((resolve, reject) => {
+        if (controller.signal.aborted) {
+          return reject(new Error("AI_REQUEST_TIMEOUT"));
+        }
+        let activeTimer: NodeJS.Timeout | null = null;
+        const onAbort = () => {
+          controller.signal.removeEventListener("abort", onAbort);
+          if (activeTimer) clearTimeout(activeTimer);
+          activeTimer = null;
+          reject(new Error("AI_REQUEST_TIMEOUT"));
+        };
+        activeTimer = setTimeout(() => {
+          controller.signal.removeEventListener("abort", onAbort);
+          activeTimer = null;
+          resolve();
+        }, ms);
+        controller.signal.addEventListener("abort", onAbort, { once: true });
+      });
+    };
 
     try {
       const responsePromise = client.models.generateContent({
@@ -200,11 +227,20 @@ export class GeminiService {
           abortSignal: controller.signal,
         },
       });
+      // Attach noop catch to prevent unhandled rejection if timeoutPromise wins the race
+      responsePromise.catch(() => { });
 
       let response;
       try {
         response = await Promise.race([responsePromise, timeoutPromise]);
       } catch (callErr: unknown) {
+        if (
+          controller.signal.aborted ||
+          (callErr instanceof Error && (callErr.message === "AI_REQUEST_TIMEOUT" || callErr.name === "AbortError"))
+        ) {
+          throw callErr;
+        }
+
         const rawErrStr = callErr instanceof Error ? callErr.message : String(callErr);
         if (
           rawErrStr.includes("503") ||
@@ -213,8 +249,19 @@ export class GeminiService {
           rawErrStr.includes("429") ||
           rawErrStr.includes("quota")
         ) {
-          // Automatic 4s backoff retry for transient Google high demand spikes
-          await new Promise((r) => setTimeout(r, 4000));
+          const elapsed = Date.now() - startTime;
+          const remainingTimeout = timeoutMs - elapsed;
+          if (remainingTimeout <= 0 || controller.signal.aborted) {
+            throw new Error("AI_REQUEST_TIMEOUT");
+          }
+
+          // Abort-aware backoff retry: sleeps 1000ms (interrupted immediately if timeout occurs)
+          await sleepWithAbort(1000);
+
+          if (controller.signal.aborted) {
+            throw new Error("AI_REQUEST_TIMEOUT");
+          }
+
           const retryPromise = client.models.generateContent({
             model,
             contents: options.prompt,
@@ -225,13 +272,12 @@ export class GeminiService {
               abortSignal: controller.signal,
             },
           });
+          retryPromise.catch(() => { });
           response = await Promise.race([retryPromise, timeoutPromise]);
         } else {
           throw callErr;
         }
       }
-
-      if (timer) clearTimeout(timer);
 
       const candidate = response.candidates?.[0];
       const finishReason = candidate?.finishReason;
@@ -248,10 +294,10 @@ export class GeminiService {
 
       const usage = response.usageMetadata
         ? {
-            promptTokens: response.usageMetadata.promptTokenCount ?? 0,
-            completionTokens: response.usageMetadata.candidatesTokenCount ?? 0,
-            totalTokens: response.usageMetadata.totalTokenCount ?? 0,
-          }
+          promptTokens: response.usageMetadata.promptTokenCount ?? 0,
+          completionTokens: response.usageMetadata.candidatesTokenCount ?? 0,
+          totalTokens: response.usageMetadata.totalTokenCount ?? 0,
+        }
         : undefined;
 
       return {
@@ -261,8 +307,9 @@ export class GeminiService {
         usage,
       };
     } catch (err: unknown) {
-      if (timer) clearTimeout(timer);
       throw normalizeAiError(err, this.apiKey ?? getAiConfig().apiKey);
+    } finally {
+      if (timer) clearTimeout(timer);
     }
   }
 }

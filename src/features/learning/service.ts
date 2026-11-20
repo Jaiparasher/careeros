@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { UpdateModuleProgressInput, UpdateTopicAssessmentInput } from "./schema";
 import catalogData from "../../../seed-data/interview-skills-catalog.json";
+import { calculateCourseProgress } from "@/lib/domain/progress";
 
 export interface LearningModule {
   id: string;
@@ -47,6 +48,73 @@ export async function getUserModules(
 
   if (error) throw new Error(error.message);
   return data ?? [];
+}
+
+export interface DashboardModuleSummary {
+  module_number: number;
+  title: string;
+  completion_percent: number;
+}
+
+export interface DashboardCourseProgress {
+  modules: DashboardModuleSummary[];
+  aggregateProgress: number;
+  totalModules: number;
+  completedCount: number;
+  inProgressCount: number;
+  notStartedCount: number;
+  inProgressModule: DashboardModuleSummary | null;
+  error: string | null;
+}
+
+export async function getDashboardCourseProgress(
+  supabase: SupabaseClient,
+  userId: string
+): Promise<DashboardCourseProgress> {
+  const { data, error } = await supabase
+    .from("learning_modules")
+    .select("module_number, title, completion_percent")
+    .eq("user_id", userId)
+    .order("module_number", { ascending: true });
+
+  if (error) {
+    return {
+      modules: [],
+      aggregateProgress: 0,
+      totalModules: 0,
+      completedCount: 0,
+      inProgressCount: 0,
+      notStartedCount: 0,
+      inProgressModule: null,
+      error: `Failed to load course modules: ${error.message}`,
+    };
+  }
+
+  const modules: DashboardModuleSummary[] = (data ?? []).map((m) => ({
+    module_number: Number(m.module_number),
+    title: String(m.title),
+    completion_percent: Number(m.completion_percent) || 0,
+  }));
+
+  const aggregateProgress = calculateCourseProgress(modules);
+  const completedCount = modules.filter((m) => m.completion_percent >= 100).length;
+  const inProgressCount = modules.filter(
+    (m) => m.completion_percent > 0 && m.completion_percent < 100
+  ).length;
+  const notStartedCount = modules.filter((m) => m.completion_percent <= 0).length;
+  const inProgressModule =
+    modules.find((m) => m.completion_percent > 0 && m.completion_percent < 100) ?? null;
+
+  return {
+    modules,
+    aggregateProgress,
+    totalModules: modules.length,
+    completedCount,
+    inProgressCount,
+    notStartedCount,
+    inProgressModule,
+    error: null,
+  };
 }
 
 export async function updateModuleProgress(

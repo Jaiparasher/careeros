@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   ALLOWED_RESUME_MIME_TYPES,
   MAX_RESUME_FILE_SIZE_BYTES,
@@ -13,6 +14,7 @@ import {
   extractResumeText,
 } from "@/features/resumes/text-extractor";
 import { analyzeResumeAgainstJd } from "@/features/resumes/analyzer";
+import { getResumeApplicationOptions } from "@/features/resumes/service";
 
 describe("Phase 3 Batch 3: Resume & JD Schemas", () => {
   it("validates allowed resume MIME types", () => {
@@ -260,5 +262,65 @@ describe("Phase 3 Batch 3: Deterministic Resume / JD Alignment Engine", () => {
     expect(analysis.matchPercentage).toBeGreaterThanOrEqual(80);
     expect(analysis.disclaimer).toContain("Deterministic Keyword & Skill Analysis");
     expect(analysis.disclaimer).toContain("not an official proprietary ATS score");
+  });
+});
+
+describe("Resume-to-Job-Application Options Loader (N-01)", () => {
+  function createAppOptionsSupabase(result: { data: unknown[] | null; error: { message: string } | null }) {
+    const selectSpy = vi.fn();
+    const eqSpy = vi.fn();
+    const orderSpy = vi.fn().mockResolvedValue(result);
+    eqSpy.mockReturnValue({ order: orderSpy });
+    selectSpy.mockReturnValue({ eq: eqSpy });
+
+    const supabase = {
+      from: vi.fn(() => ({
+        select: selectSpy,
+      })),
+    } as unknown as SupabaseClient;
+
+    return { supabase, selectSpy, eqSpy };
+  }
+
+  it("queries actual job_applications schema (company, role_title) without deleted_at and maps dropdown options", async () => {
+    const { supabase, selectSpy, eqSpy } = createAppOptionsSupabase({
+      data: [
+        { id: "app-1", company: "Atlassian", role_title: "Java Backend Engineer" },
+        { id: "app-2", company: "Razorpay", role_title: "SDE-1 Full Stack" },
+      ],
+      error: null,
+    });
+
+    const result = await getResumeApplicationOptions(supabase, "user-abc");
+
+    expect(selectSpy).toHaveBeenCalledWith("id, company, role_title");
+    expect(selectSpy.mock.calls[0]?.[0]).not.toContain("company_name");
+    expect(selectSpy.mock.calls[0]?.[0]).not.toContain("deleted_at");
+    expect(eqSpy).toHaveBeenCalledWith("user_id", "user-abc");
+
+    expect(result.error).toBeNull();
+    expect(result.applications).toEqual([
+      { id: "app-1", company_name: "Atlassian", role_title: "Java Backend Engineer" },
+      { id: "app-2", company_name: "Razorpay", role_title: "SDE-1 Full Stack" },
+    ]);
+  });
+
+  it("handles empty job applications list cleanly", async () => {
+    const { supabase } = createAppOptionsSupabase({ data: [], error: null });
+
+    const result = await getResumeApplicationOptions(supabase, "user-abc");
+    expect(result.error).toBeNull();
+    expect(result.applications).toEqual([]);
+  });
+
+  it("returns explicit error message when job_applications query fails", async () => {
+    const { supabase } = createAppOptionsSupabase({
+      data: null,
+      error: { message: "JWT expired" },
+    });
+
+    const result = await getResumeApplicationOptions(supabase, "user-abc");
+    expect(result.applications).toEqual([]);
+    expect(result.error).toContain("JWT expired");
   });
 });

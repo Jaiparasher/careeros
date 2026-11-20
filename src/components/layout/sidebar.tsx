@@ -150,10 +150,10 @@ export function Sidebar({ className }: { className?: string }) {
         <div className="rounded-lg bg-neutral-900/60 border border-neutral-800 p-3 text-xs text-neutral-400 space-y-1.5">
           <div className="flex items-center gap-1.5 font-medium text-neutral-300">
             <Sparkles className="h-3.5 w-3.5 text-amber-400" />
-            Phase 1 Active
+            Workspace Ready
           </div>
           <p className="text-[11px] leading-relaxed text-neutral-500">
-            Foundation baseline loaded. DSA & planner modules unlock in Phase 2.
+            All preparation modules active: DSA, Roadmaps, Projects, Job Tracker &amp; Mock Interviews.
           </p>
         </div>
       </div>

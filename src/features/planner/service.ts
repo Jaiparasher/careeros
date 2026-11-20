@@ -45,7 +45,7 @@ export interface StudyTaskItem {
     id: string;
     title: string;
     difficulty: string;
-    topic: string;
+    patterns?: string[];
     url: string | null;
     collection_order: number | null;
   } | null;
@@ -116,7 +116,7 @@ export async function getDayAgenda(
     .select(
       `
       *,
-      dsa_question:dsa_questions(id, title, difficulty, topic, url, collection_order),
+      dsa_question:dsa_questions(id, title, difficulty, patterns, url, collection_order),
       interview_question:interview_question_bank(id, question_title, difficulty, skill_name, topic)
     `
     )
@@ -192,6 +192,13 @@ export async function getPlanOverallStats(
   };
 }
 
+export interface SprintGrindProblemMeta {
+  title: string;
+  difficulty: string;
+  topic: string;
+  patterns: string[];
+}
+
 export async function generateSprintPreview(
   supabase: SupabaseClient,
   userId: string,
@@ -200,7 +207,7 @@ export async function generateSprintPreview(
 ): Promise<{
   schedule: SprintScheduleResult;
   dailyAvailableMinutes: number;
-  grindProblemsMap: Record<number, { title: string; difficulty: string; topic: string }>;
+  grindProblemsMap: Record<number, SprintGrindProblemMeta>;
 }> {
   const { dailyAvailableMinutes } = await getUserStudyCapacity(supabase, userId);
   const startDate = startDateStr ? new Date(startDateStr) : new Date();
@@ -211,21 +218,29 @@ export async function generateSprintPreview(
     startDate,
   });
 
-  // Fetch Grind 75 problems metadata
-  const { data: dsaRows } = await supabase
+  // Fetch Grind 75 problems metadata using actual dsa_questions.patterns column
+  const { data: dsaRows, error: dsaErr } = await supabase
     .from("dsa_questions")
-    .select("collection_order, title, difficulty, topic")
+    .select("collection_order, title, difficulty, patterns")
     .eq("user_id", userId)
     .not("collection_order", "is", null)
     .order("collection_order", { ascending: true });
 
-  const grindMap: Record<number, { title: string; difficulty: string; topic: string }> = {};
+  if (dsaErr) {
+    throw new Error(`Failed to fetch Grind 75 problems metadata: ${dsaErr.message}`);
+  }
+
+  const grindMap: Record<number, SprintGrindProblemMeta> = {};
   (dsaRows || []).forEach((row) => {
     if (row.collection_order) {
+      const patterns = Array.isArray(row.patterns)
+        ? row.patterns.filter((p): p is string => typeof p === "string" && p.trim().length > 0)
+        : [];
       grindMap[row.collection_order] = {
         title: row.title,
         difficulty: row.difficulty,
-        topic: row.topic,
+        topic: patterns.length > 0 ? patterns.join(", ") : "Algorithms",
+        patterns,
       };
     }
   });

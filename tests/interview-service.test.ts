@@ -10,6 +10,8 @@ import {
   seedQuestionBankIfEmpty,
   recordQuestionAnswer,
   getQuestionBankStats,
+  getQuestions,
+  resolveSkillFilterSlugs,
 } from "@/features/interview/service";
 
 describe("Interview Taxonomy", () => {
@@ -165,5 +167,88 @@ describe("Interview Service Logic", () => {
     );
     expect(javaCat?.total).toBe(3);
     expect(javaCat?.answered).toBe(2);
+  });
+});
+
+describe("Interview Question Bank Skill Filter Normalization (M-09)", () => {
+  function createMockQuerySupabase() {
+    const eqCalls: Array<[string, unknown]> = [];
+    const inCalls: Array<[string, unknown[]]> = [];
+
+    const builder: Record<string, unknown> = {
+      select: vi.fn().mockImplementation(() => builder),
+      eq: vi.fn().mockImplementation((col: string, val: unknown) => {
+        eqCalls.push([col, val]);
+        return builder;
+      }),
+      in: vi.fn().mockImplementation((col: string, vals: unknown[]) => {
+        inCalls.push([col, vals]);
+        return builder;
+      }),
+      ilike: vi.fn().mockImplementation(() => builder),
+      or: vi.fn().mockImplementation(() => builder),
+      order: vi.fn().mockImplementation(() => builder),
+      range: vi.fn().mockResolvedValue({ data: [], count: 0, error: null }),
+    };
+
+    const supabase = {
+      from: vi.fn(() => builder),
+    } as unknown as SupabaseClient;
+
+    return { supabase, eqCalls, inCalls };
+  }
+
+  it("normalizes Spring Boot, spring-boot, and spring_boot to identical stored slug variants", () => {
+    expect(resolveSkillFilterSlugs("Spring Boot")).toEqual(["spring-boot", "spring_boot"]);
+    expect(resolveSkillFilterSlugs("spring-boot")).toEqual(["spring-boot", "spring_boot"]);
+    expect(resolveSkillFilterSlugs("spring_boot")).toEqual(["spring-boot", "spring_boot"]);
+  });
+
+  it("resolves multi-word skill names including Hibernate and JPA, REST APIs, Spring Security, and System Design", () => {
+    expect(resolveSkillFilterSlugs("Hibernate and JPA")).toEqual(["hibernate-jpa", "hibernate_jpa"]);
+    expect(resolveSkillFilterSlugs("Hibernate & JPA")).toEqual(["hibernate-jpa", "hibernate_jpa"]);
+    expect(resolveSkillFilterSlugs("REST APIs")).toEqual(["rest-apis", "rest_apis"]);
+    expect(resolveSkillFilterSlugs("Spring Security")).toEqual(["spring-security", "spring_security"]);
+    expect(resolveSkillFilterSlugs("System Design")).toEqual(["lld", "hld"]);
+  });
+
+  it("preserves single-word skills cleanly", () => {
+    expect(resolveSkillFilterSlugs("Java")).toEqual(["java"]);
+    expect(resolveSkillFilterSlugs("java")).toEqual(["java"]);
+    expect(resolveSkillFilterSlugs("SQL")).toEqual(["sql"]);
+    expect(resolveSkillFilterSlugs("Docker")).toEqual(["docker"]);
+  });
+
+  it("normalizes unknown skills strictly without weakening filtering", () => {
+    expect(resolveSkillFilterSlugs("Quantum Computing")).toEqual([
+      "quantum-computing",
+      "quantum_computing",
+    ]);
+    expect(resolveSkillFilterSlugs("rust")).toEqual(["rust"]);
+  });
+
+  it("returns empty slug list and skips skill filter when skill parameter is missing or blank", async () => {
+    expect(resolveSkillFilterSlugs("")).toEqual([]);
+    expect(resolveSkillFilterSlugs("   ")).toEqual([]);
+
+    const { supabase, eqCalls, inCalls } = createMockQuerySupabase();
+    await getQuestions(supabase, "user-123", { page: 1, pageSize: 20, mode: "skill" });
+
+    expect(eqCalls.find(([col]) => col === "skill_slug")).toBeUndefined();
+    expect(inCalls.find(([col]) => col === "skill_slug")).toBeUndefined();
+  });
+
+  it("applies normalized skill_slug filters in getQuestions() for multi-word and single-word deep links", async () => {
+    const multi = createMockQuerySupabase();
+    await getQuestions(multi.supabase, "user-123", { skill: "Spring Boot", page: 1, pageSize: 20, mode: "skill" });
+    expect(multi.inCalls).toContainEqual(["skill_slug", ["spring-boot", "spring_boot"]]);
+
+    const hibernate = createMockQuerySupabase();
+    await getQuestions(hibernate.supabase, "user-123", { skill: "Hibernate and JPA", page: 1, pageSize: 20, mode: "skill" });
+    expect(hibernate.inCalls).toContainEqual(["skill_slug", ["hibernate-jpa", "hibernate_jpa"]]);
+
+    const single = createMockQuerySupabase();
+    await getQuestions(single.supabase, "user-123", { skill: "Java", page: 1, pageSize: 20, mode: "skill" });
+    expect(single.eqCalls).toContainEqual(["skill_slug", "java"]);
   });
 });
